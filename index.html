@@ -255,6 +255,16 @@ textarea{min-height:90px;font-size:13px}
 
   <section class="tab-seite" id="tab-eintraege">
     <div class="karte">
+      <h2 class="karte-titel">📷 Quittung fotografieren und automatisch lesen</h2>
+      <p class="erklaerung">Mach ein Foto vom Kassenbon. Dein Handy liest den Text selbst und füllt damit den Block weiter unten aus (Katalog „Komplette Quittung übernehmen“): Datum, Laden, Gesamtsumme und <b>jede einzelne Position mit Preis und Warengruppe</b>. Du musst nichts tippen.</p>
+      <p class="erklaerung">Wichtig zu wissen: Beim <b>ersten</b> Lesen lädt dein Handy das Leseprogramm aus dem Internet (einmalig, etwa 10 bis 20 MB). Danach bleibt es gespeichert und es geht auch offline. Das Foto bleibt immer auf deinem Gerät. Nach dem Lesen <b>prüfe den Block</b> und drücke dann darunter „Quittung übernehmen".</p>
+      <button type="button" class="foto-knopf" onclick="document.getElementById('ocr-eingabe').click()">📷 Foto machen oder auswählen und lesen</button>
+      <input type="file" id="ocr-eingabe" accept="image/*" class="versteckt" onchange="ocrFotoGewaehlt(event)">
+      <div id="ocr-laut" class="ocr-laut versteckt"></div>
+      <div id="ocr-status" class="hinweis-leise"></div>
+      <p class="hinweis-leise">Liest dein Browser das Programm nicht (zum Beispiel hier in der Vibe-App)? Dann nutze den Chat-Weg (Katalog „Komplette Quittung übernehmen“ weiter unten): Schick mir das Foto im Chat.</p>
+    </div>
+    <div class="karte">
       <h2 class="karte-titel">Neuen Einkauf eintragen</h2>
       <p class="erklaerung">Schreib auf, was du ausgegeben hast. Ein Eintrag = ein Einkauf oder eine Zahlung.</p>
       <form id="formular" onsubmit="return eintragAbschicken(event)">
@@ -271,20 +281,10 @@ textarea{min-height:90px;font-size:13px}
         <button type="button" class="foto-knopf" onclick="document.getElementById('quittung-eingabe').click()">📷 Quittung fotografieren oder auswählen (freiwillig)</button>
         <input type="file" id="quittung-eingabe" accept="image/*" class="versteckt" onchange="fotoGewaehlt(event)">
         <div id="foto-vorschau" class="foto-vorschau versteckt"></div>
-        <p class="erklaerung">Zweiter Weg: Du kannst ein Foto auch direkt hier anhängen. Dann tippe Datum und Betrag selbst. Das Foto wird auf deinem Gerät verkleinert gespeichert. Der einfachste Weg steht aber einen Katalog weiter unten: komplette Quittung aus dem Chat übernehmen.</p>
+        <p class="erklaerung">Zweiter Weg: Du kannst ein Foto auch direkt hier anhängen. Dann tippe Datum und Betrag selbst. Das Foto wird auf deinem Gerät verkleinert gespeichert. Der einfachste Weg steht aber weiter unten: komplette Quittung aus dem Chat übernehmen.</p>
         <button type="submit" class="knopf knopf-primaer" id="eintragen-knopf">Eintrag hinzufügen</button>
         <button type="button" class="knopf knopf-leise versteckt" id="abbruch-knopf" onclick="bearbeitungAbbrechen()">Abbrechen</button>
       </form>
-    </div>
-    <div class="karte">
-      <h2 class="karte-titel">📷 Quittung fotografieren und automatisch lesen</h2>
-      <p class="erklaerung">Mach ein Foto vom Kassenbon. Dein Handy liest den Text selbst und füllt damit den Block einen Katalog tiefer aus: Datum, Laden, Gesamtsumme und <b>jede einzelne Position mit Preis und Warengruppe</b>. Du musst nichts tippen.</p>
-      <p class="erklaerung">Wichtig zu wissen: Beim <b>ersten</b> Lesen lädt dein Handy das Leseprogramm aus dem Internet (einmalig, etwa 10 bis 20 MB). Danach bleibt es gespeichert und es geht auch offline. Das Foto bleibt immer auf deinem Gerät. Nach dem Lesen <b>prüfe den Block</b> und drücke dann darunter „Quittung übernehmen".</p>
-      <button type="button" class="foto-knopf" onclick="document.getElementById('ocr-eingabe').click()">📷 Foto machen oder auswählen und lesen</button>
-      <input type="file" id="ocr-eingabe" accept="image/*" class="versteckt" onchange="ocrFotoGewaehlt(event)">
-      <div id="ocr-laut" class="ocr-laut versteckt"></div>
-      <div id="ocr-status" class="hinweis-leise"></div>
-      <p class="hinweis-leise">Liest dein Browser das Programm nicht (zum Beispiel hier in der Vibe-App)? Dann nutze den Chat-Weg einen Katalog tiefer: Schick mir das Foto im Chat.</p>
     </div>
     <div class="karte">
       <h2 class="karte-titel">Komplette Quittung übernehmen (ohne Tippen)</h2>
@@ -351,7 +351,7 @@ textarea{min-height:90px;font-size:13px}
   <button class="knopf knopf-leise" onclick="posSchliessen()">Schließen</button>
 </div>
 <div id="toast"></div>
-<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION 27.11.2026 · FOTO-LESEN · UPDATE-SUCHE</p>
+<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
 <div class="fuss-update"><button type="button" class="mini-knopf" onclick="updateSuchen()">🔍 Nach Updates suchen</button><span class="hinweis-leise" id="update-hinweis"></span></div>
 
 <script>
@@ -370,7 +370,7 @@ if (typeof window !== 'undefined') {
 
 // ================= LOGIK-BEGINN (reine Funktionen, ohne Fenster und Dokument) =================
 
-var VERSION = 'VERSION 27.11.2026 · FOTO-LESEN-LAUT · UPDATE-SUCHE';
+var VERSION = 'VERSION 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
 var SPEICHER_EINTRAEGE = 'hhb.eintraege';
 var SPEICHER_EINKOMMEN = 'hhb.einkommen';
 var SPEICHER_ART = 'hhb.zeitraum-art';

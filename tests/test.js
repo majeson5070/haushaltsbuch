@@ -1,4 +1,4 @@
-/* Prüf-Suite für das Haushaltsbuch · VERSION 27.11.2026 · FOTO-LESEN · UPDATE-SUCHE
+/* Prüf-Suite für das Haushaltsbuch · VERSION 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE
    Aufruf: node test.js [quelldatei]  (Standard: das Canvas; im Web-Regal: index.html)
    A) Logik-Tests  B) Syntax-Check  C) DOM-Generalprobe  D) Update-Suche */
 'use strict';
@@ -157,8 +157,8 @@ pruefen('preisAmZeilenende: „BROT 3,49 B“ → 349', L.preisAmZeilenende('BRO
 pruefen('preisAmZeilenende: „1.234,56 A“ → 123456', L.preisAmZeilenende('X 1.234,56 A') === 123456);
 pruefen('preisAmZeilenende: kein Preis → null', L.preisAmZeilenende('BROT') === null);
 
-pruefen('VERSION-Siegel im Skript: FOTO-LESEN · UPDATE-SUCHE', L.VERSION.indexOf('FOTO-LESEN') >= 0 && L.VERSION.indexOf('UPDATE-SUCHE') >= 0);
-pruefen('Fuß-Zeile im HTML synchron (FOTO-LESEN · UPDATE-SUCHE)', md.indexOf('VERSION 27.11.2026 · FOTO-LESEN · UPDATE-SUCHE</p>') >= 0);
+pruefen('VERSION-Siegel im Skript: FOTO-OBEN · UPDATE-SUCHE', L.VERSION.indexOf('FOTO-OBEN') >= 0 && L.VERSION.indexOf('UPDATE-SUCHE') >= 0);
+pruefen('Fuß-Zeile im HTML synchron (FOTO-OBEN · UPDATE-SUCHE)', md.indexOf('VERSION 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>') >= 0);
 pruefen('Update-Knopf im Fuß vorhanden', md.indexOf('onclick="updateSuchen()"') >= 0);
 pruefen('Update-Hinweis-Feld vorhanden', md.indexOf('id="update-hinweis"') >= 0);
 pruefen('OCR-Karte im HTML vorhanden', md.indexOf('id="ocr-eingabe"') >= 0 && md.indexOf('ocrFotoGewaehlt') >= 0);
