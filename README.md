@@ -27,3 +27,5 @@ dem Neuladen die neue Version an (Fuß der Seite, „Nach Updates suchen“).
 
 Wichtig: Das Regal enthält nur das leere Programm. Persönliche Daten werden
 niemals hier gespeichert.
+
+Aktuelle Version: **Nr. 5** · 27.11.2026 · Foto-Lesen, Foto-Karte oben, Versions-Nummer.
