@@ -147,6 +147,11 @@ textarea{min-height:90px;font-size:13px}
 .gruppe-kopf .rest{display:flex;gap:6px}
 .versteckt{display:none !important}
 /* ---------- Quittung-Foto ---------- */
+.ocr-laut{display:block;background:#eef2ff;border:2px solid var(--farbe1);color:var(--tinte);
+  border-radius:14px;padding:14px 12px;font-size:15px;font-weight:700;text-align:center;
+  margin:12px 0;line-height:1.4}
+.ocr-laut .ocr-rad{display:inline-block;animation:ocr-drehen 1.2s linear infinite;margin-right:4px}
+@keyframes ocr-drehen{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .foto-knopf{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;border:2px dashed #c7cdf5;
   border-radius:15px;background:#f6f7ff;color:#4f46e5;font-weight:700;font-size:15px;cursor:pointer;
   padding:12px 16px;margin-top:14px;font-family:inherit}
@@ -276,7 +281,8 @@ textarea{min-height:90px;font-size:13px}
       <p class="erklaerung">Mach ein Foto vom Kassenbon. Dein Handy liest den Text selbst und füllt damit den Block einen Katalog tiefer aus: Datum, Laden, Gesamtsumme und <b>jede einzelne Position mit Preis und Warengruppe</b>. Du musst nichts tippen.</p>
       <p class="erklaerung">Wichtig zu wissen: Beim <b>ersten</b> Lesen lädt dein Handy das Leseprogramm aus dem Internet (einmalig, etwa 10 bis 20 MB). Danach bleibt es gespeichert und es geht auch offline. Das Foto bleibt immer auf deinem Gerät. Nach dem Lesen <b>prüfe den Block</b> und drücke dann darunter „Quittung übernehmen".</p>
       <button type="button" class="foto-knopf" onclick="document.getElementById('ocr-eingabe').click()">📷 Foto machen oder auswählen und lesen</button>
-      <input type="file" id="ocr-eingabe" accept="image/*" capture="environment" class="versteckt" onchange="ocrFotoGewaehlt(event)">
+      <input type="file" id="ocr-eingabe" accept="image/*" class="versteckt" onchange="ocrFotoGewaehlt(event)">
+      <div id="ocr-laut" class="ocr-laut versteckt"></div>
       <div id="ocr-status" class="hinweis-leise"></div>
       <p class="hinweis-leise">Liest dein Browser das Programm nicht (zum Beispiel hier in der Vibe-App)? Dann nutze den Chat-Weg einen Katalog tiefer: Schick mir das Foto im Chat.</p>
     </div>
@@ -364,7 +370,7 @@ if (typeof window !== 'undefined') {
 
 // ================= LOGIK-BEGINN (reine Funktionen, ohne Fenster und Dokument) =================
 
-var VERSION = 'VERSION 27.11.2026 · FOTO-LESEN · UPDATE-SUCHE';
+var VERSION = 'VERSION 27.11.2026 · FOTO-LESEN-LAUT · UPDATE-SUCHE';
 var SPEICHER_EINTRAEGE = 'hhb.eintraege';
 var SPEICHER_EINKOMMEN = 'hhb.einkommen';
 var SPEICHER_ART = 'hhb.zeitraum-art';
@@ -2198,13 +2204,22 @@ function renderAlles() {
 var OCR_SKRIPT_QUELLE = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 function ocrStatus(text) {
-  try { document.getElementById('ocr-status').textContent = text; } catch (e) {}
+  try {
+    document.getElementById('ocr-status').textContent = text;
+    var laut = document.getElementById('ocr-laut');
+    if (!laut) return;
+    var zeichen = '⏳';
+    if (/✓|Fertig gelesen/.test(text)) zeichen = '✅';
+    else if (/fehl|nicht konn|Fehler|Kein |kein Internet/i.test(text)) zeichen = '⚠️';
+    laut.innerHTML = '<span class="ocr-rad">' + zeichen + '</span> ' + esc(String(text));
+    laut.classList.remove('versteckt');
+  } catch (e) {}
 }
 
 function ocrFotoGewaehlt(ev) {
   try {
     var datei = ev && ev.target && ev.target.files && ev.target.files[0];
-    if (!datei) { return; }
+    if (!datei) { ocrStatus('Kein Foto erhalten. Bitte tippe den Knopf noch einmal und wähle ein Foto aus.'); return; }
     if (typeof FileReader === 'undefined' || typeof Image === 'undefined') {
       ocrStatus('Fotos gehen in diesem Browser leider nicht. Nutze den Chat-Weg: Schick mir das Foto im Chat.');
       return;
@@ -2322,6 +2337,12 @@ function init() {
     return '<option value="' + g.id + '">' + g.icon + ' ' + esc(g.name) + '</option>';
   }).join('');
   zeigeTab(ST.tab || 'uebersicht');
+}
+
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('error', function (ev) {
+    try { zeigeFehler(ev && ev.message ? ev.message : 'Unbekannter Fehler'); } catch (e) {}
+  });
 }
 
 if (typeof document !== 'undefined' && document.getElementById) {
