@@ -3,7 +3,7 @@
    Neuladen ankommen; ohne Internet greift der Speicher.
    Leseprogramm (Tesseract): Speicher zuerst, damit es nach dem ersten
    Quittung-Lesen auch offline geht. */
-var APP_SPEICHER = 'haushaltsbuch-app-version-27-11-2026-foto-oben-update-suche';
+var APP_SPEICHER = 'haushaltsbuch-app-nr-4-27-11-2026-foto-oben-update-suche';
 var OCR_SPEICHER = 'haushaltsbuch-ocr-v1';
 var OCR_QUELLEN = ['cdn.jsdelivr.net', 'tessdata.projectnaptha.com', 'unpkg.com'];
 
