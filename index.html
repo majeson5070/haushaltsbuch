@@ -2236,7 +2236,7 @@ function ocrFotoGewaehlt(ev) {
   } catch (f) { zeigeFehler(f); }
 }
 
-/* Fürs Lesen braucht der Text scharfe Kanten: größer und kräftiger als das Anhäng-Foto. */
+/* Ersatzweg: ohne FileReader direkt aus der Foto-Datei lesen. */
 function fotoUrlWeg(datei) {
   try {
     if (typeof URL === 'undefined' || !URL.createObjectURL) {
