@@ -351,7 +351,7 @@ textarea{min-height:90px;font-size:13px}
   <button class="knopf knopf-leise" onclick="posSchliessen()">Schließen</button>
 </div>
 <div id="toast"></div>
-<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION Nr. 6 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
+<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
 <div class="fuss-update"><button type="button" class="mini-knopf" onclick="updateSuchen()">🔍 Nach Updates suchen</button><span class="hinweis-leise" id="update-hinweis"></span></div>
 
 <script>
@@ -370,7 +370,7 @@ if (typeof window !== 'undefined') {
 
 // ================= LOGIK-BEGINN (reine Funktionen, ohne Fenster und Dokument) =================
 
-var VERSION = 'VERSION Nr. 6 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
+var VERSION = 'VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
 var SPEICHER_EINTRAEGE = 'hhb.eintraege';
 var SPEICHER_EINKOMMEN = 'hhb.einkommen';
 var SPEICHER_ART = 'hhb.zeitraum-art';
@@ -1023,7 +1023,9 @@ var WAREN_HINT = [
   ['rezeptur', 'gesundheit'], ['medikam', 'gesundheit'],
   ['socken', 'kleidung'], ['shirt', 'kleidung'], ['hose', 'kleidung'], ['jacke', 'kleidung'], ['schuh', 'kleidung'],
   ['benzin', 'mobilitaet'], ['diesel', 'mobilitaet'], ['super e5', 'mobilitaet'], ['super e10', 'mobilitaet'],
-  ['ticket', 'freizeit'], ['kinokarte', 'freizeit']
+  ['ticket', 'freizeit'], ['kinokarte', 'freizeit'],
+  ['holz', 'drogerie'], ['brikett', 'drogerie'], ['kamin', 'drogerie'],
+  ['anzünder', 'drogerie'], ['müllbeutel', 'drogerie'], ['müllsack', 'drogerie'], ['kerze', 'drogerie']
 ];
 
 function warenGruppeAusName(name, standardId) {
@@ -1095,12 +1097,38 @@ function belegAusText(rohtext, heuteIsoStr) {
   var ladenGruppe = gruppeVorschlag(laden);
   var standardGruppe = ladenGruppe ? ladenGruppe.id : 'lebensmittel';
 
-  /* 5) Positionen sammeln: Zeilen mit Preis, die keine Summen- oder Zahl-Zeile sind. */
+/* 5) Positionen sammeln: Zeilen mit Preis, die keine Summen- oder Zahl-Zeile sind.
+     Netto und aehnliche Kassen drucken manche Artikel so:
+       „2 x 4,44“ (Menge mal Einzelpreis), darunter der Artikel-Name, darunter der
+       Zeilen-Preis („8,88 B“). Diese Zeilen fasse ich zu EINER Position mit dem
+     echten Namen zusammen. Preis-Zeilen ohne Name holen sich den Namen aus der
+     Zeile darueber. */
   var positionen = [];
+  var verbraucht = {};
+  function namensKandidatOK(k) {
+    if (k < 0 || k >= zeilen.length || verbraucht[k]) return false;
+    var zk = zeilen[k];
+    if (preisAmZeilenende(zk) !== null) return false;
+    if (SUMMEN_WORTE.test(zk) || ZAHL_WORTE.test(zk)) return false;
+    var sauber = zk.replace(/[^A-Za-zÄÖÜäöüß0-9&+.\-\s()]/g, ' ').replace(/\s+/g, ' ').trim();
+    var buchstaben = (sauber.match(/[A-Za-zÄÖÜäöüß]/g) || []).length;
+    if (buchstaben < 3) return false;
+    if (/^(eur|www\.|http)/i.test(sauber)) return false;
+    if (k < 2 && buchstaben < 6) return false;
+    return true;
+  }
+  function nameSauber(text) {
+    return text.replace(/[^A-Za-zÄÖÜäöüß0-9&+.\-\s()]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
   for (var z = 0; z < zeilen.length; z++) {
+    if (verbraucht[z]) continue;
     var zeile = zeilen[z];
     var cent = preisAmZeilenende(zeile);
     if (cent === null) continue;
+    /* Nur-Zahlen-Zeilen mit Datum-Form (26.11.26) sind kein Preis. */
+    if (/^\d{1,2}[.\/\-]\d{1,2}(?:[.\/\-]\d{2,4})?\s*$/.test(zeile)) continue;
+    /* Zeilen, die mit einem Datum enden („Dortmund, den 26.11.26“), sind kein Preis. */
+    if (/\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4}\s*$/.test(zeile)) continue;
     if (SUMMEN_WORTE.test(zeile)) continue;
     if (ZAHL_WORTE.test(zeile)) continue;
     if (gesamtCent !== null && cent === gesamtCent && positionen.length > 0 && /endbetrag|zu zahlen|zahlbetrag/i.test(zeile)) continue;
@@ -1111,14 +1139,36 @@ function belegAusText(rohtext, heuteIsoStr) {
     var menge = 1;
     var mengeTreffer = name.match(/^(\d{1,2})\s*[x*×]\s*/i);
     if (mengeTreffer) { menge = Number(mengeTreffer[1]); name = name.slice(mengeTreffer[0].length).trim(); }
-    name = name.replace(/[^A-Za-zÄÖÜäöüß0-9&+.\-'\s()]/g, ' ').replace(/\s+/g, ' ').trim();
+    name = nameSauber(name);
     if (name === '' || !/[A-Za-zÄÖÜäöüß]/.test(name)) {
-      if (menge > 1) { name = 'Artikel'; } else { continue; }
+      var nameGefunden = false;
+      if (menge > 1) {
+        /* Netto-Muster: Menge-Zeile, dann Name, dann Zeilen-Preis. */
+        for (var v = z + 1; v <= Math.min(z + 3, zeilen.length - 1); v++) {
+          if (namensKandidatOK(v)) {
+            name = nameSauber(zeilen[v]); verbraucht[v] = true; nameGefunden = true;
+            for (var w = v + 1; w <= Math.min(v + 4, zeilen.length - 1); w++) {
+              var cent2 = preisAmZeilenende(zeilen[w]);
+              if (cent2 !== null && !SUMMEN_WORTE.test(zeilen[w]) && !ZAHL_WORTE.test(zeilen[w])) {
+                if (cent2 === cent * menge) { verbraucht[w] = true; }
+                break;
+              }
+            }
+            break;
+          }
+        }
+      } else if (namensKandidatOK(z - 1)) {
+        /* Preis-Zeile ohne Name: Name steht oft in der Zeile darueber. */
+        name = nameSauber(zeilen[z - 1]); verbraucht[z - 1] = true; nameGefunden = true;
+      }
+      if (!nameGefunden) {
+        if (menge > 1) { name = 'Artikel'; } else { continue; }
+      }
     }
     positionen.push({ name: name.slice(0, 60), cent: cent * (menge > 1 ? menge : 1), gruppe: warenGruppeAusName(name, standardGruppe) });
   }
 
-  /* 6) Gesamtsumme: erkannt oder aus Positionen zusammengezählt. */
+    /* 6) Gesamtsumme: erkannt oder aus Positionen zusammengezählt. */
   if (gesamtCent === null && positionen.length) {
     gesamtCent = positionen.reduce(function (sum, pos) { return sum + pos.cent; }, 0);
     hinweise.push('Keine Kassen-Summe erkannt. Ich habe die Positionen zusammengezählt. Bitte prüfen.');
@@ -2330,7 +2380,10 @@ function ocrVerarbeiten(rohtext) {
     feld.value = erg.block;
     if (!erg.positionen.length) {
       ocrStatus('Lesen beendet, aber nichts Brauchbares erkannt.');
-      ergebnisFeld.textContent = erg.hinweise.join(' ');
+      var anfang = String(rohtext || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+      ergebnisFeld.textContent = 'Ich habe keine Positionen erkannt. So hat dein Handy den Bon gelesen (Anfang): „' + anfang +
+        '“ Vielleicht war das Foto unscharf oder der Bon zerknittert? Dann: Foto im Chat schicken, ich lese ihn selbst aus. ' +
+        erg.hinweise.join(' ');
       return;
     }
     ocrStatus('Fertig gelesen ✓ Jetzt bitte prüfen und übernehmen.');

@@ -1,4 +1,4 @@
-/* Prüf-Suite für das Haushaltsbuch · VERSION Nr. 6 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE
+/* Prüf-Suite für das Haushaltsbuch · VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE
    Aufruf: node test.js [quelldatei]  (Standard: das Canvas; im Web-Regal: index.html)
    A) Logik-Tests  B) Syntax-Check  C) DOM-Generalprobe  D) Update-Suche */
 'use strict';
@@ -151,14 +151,28 @@ pruefen('OCR: ohne Preise → leerer Block mit Erklär-Hinweis', o5.block === ''
 const o6 = L.belegAusText('KIOSK\nBROT 2,50', HEUTE);
 pruefen('OCR: unbekannter Laden → Name oder Hinweis', o6.laden.length > 0 && (o6.laden === 'KIOSK' || o6.hinweise.join(' ').indexOf('Laden') >= 0));
 pruefen('OCR: unbekannter Kiosk → Standardgruppe lebensmittel', o6.positionen[0].gruppe === 'lebensmittel');
+
+const rohNetto = 'Netto Marken-Discount\nDortmund, den 26.11.26\n2 x 4,44\nFlamenco Kaminholz 11dm3\n8,88 B\nSUMME [2] 8,88\nSUMME € 8,88\nKartenzahlung EUR 8,88';
+const o7 = L.belegAusText(rohNetto, HEUTE);
+pruefen('Netto: 1 Position statt Doppel-Erkennung', o7.positionen.length === 1);
+pruefen('Netto: echter Name Kaminholz erkannt', o7.positionen[0].name.indexOf('Kaminholz') >= 0);
+pruefen('Netto: 8,88 → 888 Cent', o7.positionen[0].cent === 888);
+pruefen('Netto: Kaminholz → Drogerie & Haushalt', o7.positionen[0].gruppe === 'drogerie');
+pruefen('Netto: Gesamt 888 Cent aus Summe', o7.gesamtCent === 888);
+const pO7 = L.belegParse(o7.block, HEUTE);
+pruefen('Netto→belegParse: diff 0', pO7.beleg && pO7.diff === 0);
+const rohNettoOhneB = 'Netto Marken-Discount\nFlamenco Kaminholz 11dm3\n8,88\nSUMME € 8,88';
+const o8 = L.belegAusText(rohNettoOhneB, HEUTE);
+pruefen('Netto ohne B-Suffix: Name aus Zeile darueber', o8.positionen.length === 1 && o8.positionen[0].name.indexOf('Kaminholz') >= 0 && o8.positionen[0].cent === 888);
+
 pruefen('warenGruppeAusName: aspirin → gesundheit', L.warenGruppeAusName('ASPIRIN 500', 'lebensmittel') === 'gesundheit');
 pruefen('warenGruppeAusName: unbekannt → Standard', L.warenGruppeAusName('QUARK', 'lebensmittel') === 'lebensmittel');
 pruefen('preisAmZeilenende: „BROT 3,49 B“ → 349', L.preisAmZeilenende('BROT 3,49 B') === 349);
 pruefen('preisAmZeilenende: „1.234,56 A“ → 123456', L.preisAmZeilenende('X 1.234,56 A') === 123456);
 pruefen('preisAmZeilenende: kein Preis → null', L.preisAmZeilenende('BROT') === null);
 
-pruefen('VERSION-Siegel im Skript: Nr. 6 · FOTO-OBEN · UPDATE-SUCHE', L.VERSION.indexOf('Nr. 6') >= 0 && L.VERSION.indexOf('FOTO-OBEN') >= 0 && L.VERSION.indexOf('UPDATE-SUCHE') >= 0);
-pruefen('Fuß-Zeile im HTML synchron (Nr. 6 · FOTO-OBEN · UPDATE-SUCHE)', md.indexOf('VERSION Nr. 6 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>') >= 0);
+pruefen('VERSION-Siegel im Skript: Nr. 7 · FOTO-OBEN · UPDATE-SUCHE', L.VERSION.indexOf('Nr. 7') >= 0 && L.VERSION.indexOf('FOTO-OBEN') >= 0 && L.VERSION.indexOf('UPDATE-SUCHE') >= 0);
+pruefen('Fuß-Zeile im HTML synchron (Nr. 7 · FOTO-OBEN · UPDATE-SUCHE)', md.indexOf('VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>') >= 0);
 pruefen('Update-Knopf im Fuß vorhanden', md.indexOf('onclick="updateSuchen()"') >= 0);
 pruefen('Update-Hinweis-Feld vorhanden', md.indexOf('id="update-hinweis"') >= 0);
 pruefen('OCR-Karte im HTML vorhanden', md.indexOf('id="ocr-eingabe"') >= 0 && md.indexOf('ocrFotoGewaehlt') >= 0);
