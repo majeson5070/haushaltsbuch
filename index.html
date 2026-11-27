@@ -351,7 +351,7 @@ textarea{min-height:90px;font-size:13px}
   <button class="knopf knopf-leise" onclick="posSchliessen()">Schließen</button>
 </div>
 <div id="toast"></div>
-<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION Nr. 4 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
+<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION Nr. 5 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
 <div class="fuss-update"><button type="button" class="mini-knopf" onclick="updateSuchen()">🔍 Nach Updates suchen</button><span class="hinweis-leise" id="update-hinweis"></span></div>
 
 <script>
@@ -370,7 +370,7 @@ if (typeof window !== 'undefined') {
 
 // ================= LOGIK-BEGINN (reine Funktionen, ohne Fenster und Dokument) =================
 
-var VERSION = 'VERSION Nr. 4 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
+var VERSION = 'VERSION Nr. 5 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
 var SPEICHER_EINTRAEGE = 'hhb.eintraege';
 var SPEICHER_EINKOMMEN = 'hhb.einkommen';
 var SPEICHER_ART = 'hhb.zeitraum-art';
@@ -2220,20 +2220,38 @@ function ocrFotoGewaehlt(ev) {
   try {
     var datei = ev && ev.target && ev.target.files && ev.target.files[0];
     if (!datei) { ocrStatus('Kein Foto erhalten. Bitte tippe den Knopf noch einmal und wähle ein Foto aus.'); return; }
-    if (typeof FileReader === 'undefined' || typeof Image === 'undefined') {
-      ocrStatus('Fotos gehen in diesem Browser leider nicht. Nutze den Chat-Weg: Schick mir das Foto im Chat.');
+    if (typeof Image === 'undefined') {
+      ocrStatus('Dieser Browser kann keine Fotos verarbeiten. Öffne die App im Browser Safari oder schick mir das Foto im Chat.');
       return;
     }
     ocrStatus('Foto wird vorbereitet …');
-    var leser = new FileReader();
-    leser.onload = function () { bildFuerOcr(leser.result); };
-    leser.onerror = function () { ocrStatus('Das Foto konnte nicht gelesen werden.'); };
-    leser.readAsDataURL(datei);
+    if (typeof FileReader !== 'undefined') {
+      var leser = new FileReader();
+      leser.onload = function () { bildFuerOcr(leser.result); };
+      leser.onerror = function () { fotoUrlWeg(datei); };
+      leser.readAsDataURL(datei);
+    } else {
+      fotoUrlWeg(datei);
+    }
   } catch (f) { zeigeFehler(f); }
 }
 
 /* Fürs Lesen braucht der Text scharfe Kanten: größer und kräftiger als das Anhäng-Foto. */
-function bildFuerOcr(dataUrl) {
+function fotoUrlWeg(datei) {
+  try {
+    if (typeof URL === 'undefined' || !URL.createObjectURL) {
+      ocrStatus('Dieser Browser kann keine Fotos verarbeiten. Öffne die App im Browser Safari oder schick mir das Foto im Chat.');
+      return;
+    }
+    var fotoUrl = URL.createObjectURL(datei);
+    bildFuerOcr(fotoUrl, function () { try { URL.revokeObjectURL(fotoUrl); } catch (e) {} });
+  } catch (e) {
+    ocrStatus('Dieser Browser kann keine Fotos verarbeiten. Öffne die App im Browser Safari oder schick mir das Foto im Chat.');
+  }
+}
+
+/* Fürs Lesen braucht der Text scharfe Kanten: größer und kräftiger als das Anhäng-Foto. */
+function bildFuerOcr(dataUrl, freigeben) {
   try {
     var img = new Image();
     img.onload = function () {
@@ -2249,6 +2267,7 @@ function bildFuerOcr(dataUrl) {
       var ctx = c.getContext('2d');
       ctx.drawImage(img, 0, 0, breite, hoehe);
       ocrTesseractLaden(c.toDataURL('image/jpeg', 0.9));
+      if (freigeben) { freigeben(); }
     };
     img.onerror = function () { ocrStatus('Das Bild konnte nicht verarbeitet werden.'); };
     img.src = dataUrl;
