@@ -1,0 +1,2337 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<title>Mein Haushaltsbuch</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+:root{
+  --farbe1:#6366f1; --farbe2:#8b5cf6; --farbe3:#a855f7;
+  --tinte:#1e2333; --leise:#667085; --hinter:#f4f6fb;
+  --rand:#e5e9f4; --gruen:#16a34a; --rot:#dc2626; --gelb:#d97706;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,system-ui,sans-serif;
+  background:linear-gradient(180deg,#edf0ff 0%,#f4f6fb 260px,#f7f8fc 100%);
+  color:var(--tinte); min-height:100vh;
+  padding-top:calc(126px + env(safe-area-inset-top));
+}
+/* ---------- Kopf und Tab-Leiste ---------- */
+#kopf{position:fixed;top:0;left:0;right:0;z-index:20;
+  background:rgba(255,255,255,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--rand); padding-top:env(safe-area-inset-top);}
+.kopf-in{max-width:430px;margin:0 auto;padding:12px 16px 4px;display:flex;align-items:center;gap:12px}
+.kopf-in .logo{width:40px;height:40px;border-radius:13px;flex:none;
+  background:linear-gradient(135deg,var(--farbe1),var(--farbe3));
+  display:flex;align-items:center;justify-content:center;font-size:21px;color:#fff;
+  box-shadow:0 6px 16px rgba(124,58,237,.35)}
+h1{font-size:19px;font-weight:800;letter-spacing:-.2px}
+.unter-zeile{font-size:12.5px;color:var(--leise);margin-top:1px}
+#tableiste{max-width:430px;margin:0 auto;padding:6px 10px 10px;display:flex;gap:4px}
+.tab-knopf{flex:1;min-height:46px;border:none;background:transparent;border-radius:13px;
+  font-size:11px;font-weight:600;color:var(--leise);cursor:pointer;line-height:1.25;padding:4px 1px}
+.tab-knopf .icon{display:block;font-size:18px;margin-bottom:2px}
+.tab-knopf.aktiv{background:linear-gradient(135deg,var(--farbe1),var(--farbe2));color:#fff;
+  box-shadow:0 6px 18px rgba(99,102,241,.4)}
+/* ---------- Fehler-Box ---------- */
+#fehlerBox{display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;
+  border-radius:14px;padding:12px 14px;font-size:13.5px;margin:0 0 14px}
+/* ---------- Grund-Layout ---------- */
+main{max-width:430px;margin:0 auto;padding:16px 16px 60px}
+#fuss{max-width:430px;margin:0 auto;padding:0 16px 40px;text-align:center;
+  font-size:12px;color:var(--leise)}
+.fuss-update{max-width:430px;margin:-26px auto 0;padding:0 16px 26px;text-align:center}
+.fuss-update .mini-knopf{font-size:12.5px;padding:6px 12px;min-height:32px}
+#update-hinweis{display:block;margin-top:6px}
+.tab-seite{display:none}
+.tab-seite.aktiv{display:block;animation:erscheinen .25s ease}
+@keyframes erscheinen{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* ---------- Karten ---------- */
+.karte{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;
+  border:1px solid rgba(255,255,255,.65);
+  box-shadow:0 10px 30px rgba(30,35,51,.08),0 1px 3px rgba(30,35,51,.05)}
+.karte-hero{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 55%,#a855f7 100%);color:#fff;
+  box-shadow:0 14px 34px rgba(124,58,237,.35);border:none}
+.karte-hero .zahl{font-size:38px;font-weight:800;letter-spacing:-1px;margin:6px 0 4px}
+.karte-hero .neben{font-size:14px;opacity:.92}
+.karte-hero .vergleich-zeile{font-size:13.5px;background:rgba(255,255,255,.16);border-radius:10px;
+  padding:8px 12px;margin-top:10px}
+.karte-titel{font-size:16px;font-weight:700;margin-bottom:6px}
+.karte-titel-klein{font-size:13px;font-weight:700;color:var(--leise);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.erklaerung{font-size:13px;color:var(--leise);margin-top:6px;line-height:1.45}
+/* ---------- Zeitraum-Wahl ---------- */
+.zeit-reihe{display:flex;align-items:center;gap:8px}
+.pfeil-knopf{width:44px;height:44px;flex:none;border-radius:13px;border:none;font-size:19px;
+  background:#eef0f9;color:#4f46e5;cursor:pointer;font-weight:700}
+.segment{flex:1;display:flex;background:#eef0f9;border-radius:13px;padding:3px;gap:2px}
+.seg-knopf{flex:1;min-height:38px;border:none;background:transparent;border-radius:10px;
+  font-size:12.5px;font-weight:700;color:var(--leise);cursor:pointer;padding:2px}
+.seg-knopf.aktiv{background:linear-gradient(135deg,var(--farbe1),var(--farbe2));color:#fff;
+  box-shadow:0 4px 12px rgba(99,102,241,.35)}
+.zeit-titel{font-size:15px;font-weight:700;margin-top:10px}
+.zeit-unter{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
+.mini-knopf{min-height:36px;border:none;border-radius:10px;background:#eef0f9;color:#4f46e5;
+  font-size:12.5px;font-weight:700;cursor:pointer;padding:0 12px}
+/* ---------- Balken ---------- */
+.balken-zeile{margin-top:12px}
+.balken-kopf{display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:600}
+.balken-kopf .links{display:flex;gap:7px;align-items:center;min-width:0}
+.balken-kopf .links span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.balken-kopf .rechts{white-space:nowrap}
+.balken-spur{height:10px;border-radius:6px;background:#edf0f8;overflow:hidden;margin-top:6px}
+.balken-fill{height:100%;border-radius:6px;min-width:3px}
+.balken-prozent{font-size:12px;color:var(--leise);margin-top:3px}
+/* ---------- Formulare ---------- */
+label{display:block;font-size:13.5px;font-weight:600;color:#374151;margin-top:12px}
+label:first-child{margin-top:0}
+input,select,textarea{width:100%;min-height:48px;border:1.5px solid #dde1ee;border-radius:13px;
+  padding:11px 12px;font-size:17px;background:#fff;margin-top:6px;font-family:inherit;color:var(--tinte)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--farbe1);
+  box-shadow:0 0 0 3px rgba(99,102,241,.16)}
+textarea{min-height:90px;font-size:13px}
+.knopf{min-height:48px;border:none;border-radius:14px;font-weight:700;font-size:15.5px;
+  cursor:pointer;padding:0 18px;font-family:inherit}
+.knopf-primaer{background:linear-gradient(135deg,var(--farbe1),var(--farbe3));color:#fff;
+  box-shadow:0 8px 22px rgba(99,102,241,.35);width:100%;margin-top:14px}
+.knopf-primaer:active{transform:translateY(1px)}
+.knopf-leise{background:#eef0f9;color:#4f46e5;min-height:44px;margin-top:8px}
+.knopf-gefahr{background:#fee2e2;color:#b91c1c;min-height:44px;margin-top:8px}
+.hinweis-leise{font-size:12.5px;color:#4f46e5;margin-top:6px;min-height:16px}
+/* ---------- Eintrag-Liste ---------- */
+.tag-kopf{font-size:13px;font-weight:700;color:var(--leise);margin:18px 2px 6px}
+.tag-kopf:first-child{margin-top:0}
+.eintrag{display:flex;align-items:center;gap:12px;background:#fff;border-radius:15px;
+  border:1px solid #f0f2f9;box-shadow:0 3px 12px rgba(30,35,51,.05);padding:12px 14px;margin-bottom:8px}
+.eintrag .icon{font-size:24px;width:38px;height:38px;border-radius:12px;flex:none;
+  background:#f3f4fa;display:flex;align-items:center;justify-content:center}
+.eintrag .mitte{flex:1;min-width:0}
+.eintrag .laden{font-size:15.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eintrag .gruppe{font-size:12.5px;color:var(--leise);margin-top:1px}
+.eintrag .betrag{font-size:16px;font-weight:800;white-space:nowrap}
+.eintrag .akt{display:flex;gap:6px;flex:none}
+.rund-knopf{width:36px;height:36px;border-radius:11px;border:none;cursor:pointer;font-size:15px;
+  background:#f3f4fa;color:#475069}
+.rund-knopf.gefahr{background:#fee2e2;color:#b91c1c}
+.rund-knopf:disabled{opacity:.45;cursor:default}
+.stat-reihe.vier{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:768px){.stat-reihe.vier{grid-template-columns:repeat(4,1fr)}}
+.leer-karte{text-align:center;padding:34px 18px}
+.leer-karte .gross{font-size:40px;margin-bottom:10px}
+/* ---------- Tipps & Prüfung ---------- */
+.tipp-karte{display:flex;gap:12px;align-items:flex-start}
+.tipp-karte .icon{font-size:26px;width:46px;height:46px;border-radius:14px;flex:none;
+  background:#f3f4fa;display:flex;align-items:center;justify-content:center}
+.tipp-karte.warn .icon{background:#fee2e2}
+.tipp-karte.gut .icon{background:#dcfce7}
+.tipp-karte h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.tipp-karte p{font-size:13.5px;color:#3b4358;line-height:1.5}
+.pruef-zeile{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f1f3f9}
+.pruef-zeile:last-child{border-bottom:none}
+.pruef-zeile .icon{font-size:18px;flex:none;margin-top:1px}
+.pruef-zeile p{font-size:13.5px;line-height:1.5;color:#3b4358}
+.stat-reihe{display:flex;gap:10px}
+.stat-kasten{flex:1;background:#f6f7fd;border-radius:14px;padding:12px;text-align:center}
+.stat-kasten .zahl{font-size:20px;font-weight:800}
+.stat-kasten .text{font-size:12px;color:var(--leise);margin-top:2px}
+.gruppe-karte{background:#fff;border-radius:15px;padding:14px;margin-bottom:10px;
+  border:1px solid #f0f2f9;box-shadow:0 3px 12px rgba(30,35,51,.05)}
+.gruppe-kopf{display:flex;align-items:center;gap:10px}
+.gruppe-kopf .icon{font-size:22px;width:38px;height:38px;border-radius:12px;flex:none;
+  background:#f3f4fa;display:flex;align-items:center;justify-content:center}
+.gruppe-kopf .name{flex:1;min-width:0;font-weight:700;font-size:14.5px}
+.gruppe-kopf .summe{font-weight:800;font-size:15px;white-space:nowrap}
+.gruppe-kopf .rest{display:flex;gap:6px}
+.versteckt{display:none !important}
+/* ---------- Quittung-Foto ---------- */
+.foto-knopf{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;border:2px dashed #c7cdf5;
+  border-radius:15px;background:#f6f7ff;color:#4f46e5;font-weight:700;font-size:15px;cursor:pointer;
+  padding:12px 16px;margin-top:14px;font-family:inherit}
+.foto-vorschau{display:flex;align-items:center;gap:12px;margin-top:12px;background:#f6f7fd;border-radius:14px;padding:10px}
+.foto-vorschau img{width:56px;height:56px;object-fit:cover;border-radius:10px}
+.foto-vorschau .text{flex:1;font-size:13px;color:#3b4358}
+.foto-link{background:none;border:none;color:#4f46e5;font-weight:700;font-size:12.5px;cursor:pointer;padding:0;font-family:inherit}
+#foto-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,18,30,.93);z-index:60;
+  display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+#foto-modal.offen{display:flex}
+#foto-modal img{max-width:96vw;max-height:76vh;border-radius:14px}
+#foto-modal .knopf{min-height:44px}
+#pos-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,18,30,.93);z-index:60;
+  display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+#pos-modal.offen{display:flex}
+#pos-modal .kasten{background:#fff;border-radius:18px;padding:18px;max-height:76vh;overflow:auto;
+  max-width:560px;width:92vw;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+#pos-modal h3{font-size:16px;margin-bottom:4px}
+#pos-modal .unter{font-size:12.5px;color:var(--leise);margin-bottom:8px}
+.pos-zeile{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #f1f3f9}
+.pos-zeile .icon{width:34px;height:34px;border-radius:10px;background:#f3f4fa;display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.pos-zeile .links{flex:1;min-width:0}
+.pos-zeile .name{font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pos-zeile .gruppe{font-size:12px;color:var(--leise)}
+.pos-zeile .betrag{font-size:14.5px;font-weight:700;white-space:nowrap}
+/* ---------- Toast ---------- */
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:#1e2333;color:#fff;padding:12px 22px;border-radius:14px;font-size:14px;font-weight:600;
+  opacity:0;pointer-events:none;transition:all .3s;z-index:50;max-width:88vw;text-align:center}
+#toast.zeigen{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ---------- iPad ---------- */
+@media (min-width:768px){
+  .kopf-in,#tableiste,main,#fuss{max-width:720px}
+  .kopf-in{padding:18px 24px 6px}
+  h1{font-size:22px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-2 .karte{margin-bottom:0}
+  .haelfte-links{grid-column:1 / -1}
+  .tab-knopf{font-size:13px}
+}
+/* ---------- Desktop ---------- */
+@media (min-width:1024px){
+  .kopf-in,#tableiste,main,#fuss{max-width:1120px}
+  .kopf-in{padding:20px 32px 8px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  .grid-3 .karte{margin-bottom:0}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-2 .karte{margin-bottom:0}
+  .haelfte-links{grid-column:auto}
+  main{padding:24px 32px 60px}
+  .tab-knopf{font-size:13.5px}
+}
+/* ---------- Druck: je Zeitraum genau eine A4-Seite ---------- */
+#druck{display:none}
+@media print{
+  body{background:#fff;padding:0}
+  #kopf,main,#fuss,#toast{display:none !important}
+  #druck{display:block}
+  .druck-seite{page-break-after:always;break-after:page}
+  .druck-seite:last-child{page-break-after:auto;break-after:auto}
+  *{color:#000 !important;background:#fff !important;box-shadow:none !important}
+  .druck-seite h2{font-size:14pt;margin-bottom:4px}
+  .druck-unter{font-size:10.5pt;color:#444 !important;margin-bottom:10px}
+  .druck-gesamt{font-size:26pt;font-weight:800;margin:6px 0 2px}
+  .druck-vergleich{font-size:11pt;margin-bottom:10px}
+  .druck-tabelle{width:100%;border-collapse:collapse;font-size:10.5pt;margin-bottom:12px}
+  .druck-tabelle th,.druck-tabelle td{border:1px solid #999;padding:4px 8px;text-align:left}
+  .druck-tabelle th:nth-child(2),.druck-tabelle td:nth-child(2),
+  .druck-tabelle td:nth-child(3),.druck-tabelle td:nth-child(4){text-align:right}
+  .druck-kernsaetze li{font-size:10.5pt;margin-bottom:4px}
+  .druck-fuss{font-size:9pt;color:#555 !important;margin-top:14px}
+}
+</style>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+
+<header id="kopf">
+  <div class="kopf-in">
+    <div class="logo">💰</div>
+    <div>
+      <h1>Mein Haushaltsbuch</h1>
+      <p class="unter-zeile">Ausgaben notieren. Tipps holen. Geld sparen.</p>
+    </div>
+  </div>
+  <nav id="tableiste">
+    <button class="tab-knopf aktiv" id="nav-uebersicht" onclick="zeigeTab('uebersicht')"><span class="icon">📊</span>Übersicht</button>
+    <button class="tab-knopf" id="nav-eintraege" onclick="zeigeTab('eintraege')"><span class="icon">➕</span>Einträge</button>
+    <button class="tab-knopf" id="nav-gruppen" onclick="zeigeTab('gruppen')"><span class="icon">🗂️</span>Gruppen</button>
+    <button class="tab-knopf" id="nav-fixe" onclick="zeigeTab('fixe')"><span class="icon">📌</span>Fixkosten</button>
+    <button class="tab-knopf" id="nav-pruefung" onclick="zeigeTab('pruefung')"><span class="icon">🔍</span>Prüfung</button>
+    <button class="tab-knopf" id="nav-tipps" onclick="zeigeTab('tipps')"><span class="icon">💡</span>Tipps</button>
+  </nav>
+</header>
+
+<main>
+  <div id="fehlerBox"></div>
+
+  <section class="tab-seite aktiv" id="tab-uebersicht"><div id="inhalt-uebersicht"></div></section>
+
+  <section class="tab-seite" id="tab-eintraege">
+    <div class="karte">
+      <h2 class="karte-titel">Neuen Einkauf eintragen</h2>
+      <p class="erklaerung">Schreib auf, was du ausgegeben hast. Ein Eintrag = ein Einkauf oder eine Zahlung.</p>
+      <form id="formular" onsubmit="return eintragAbschicken(event)">
+        <label for="eingabe-datum">Datum (wann war der Einkauf?)</label>
+        <input type="date" id="eingabe-datum" required>
+        <label for="eingabe-laden">Wo hast du eingekauft?</label>
+        <input id="eingabe-laden" placeholder="zum Beispiel: REWE" oninput="ladenGeaendert()" autocomplete="off">
+        <div class="hinweis-leise" id="vorschlags-hinweis"></div>
+        <label for="eingabe-gruppe">Was war das? (Warengruppe)</label>
+        <select id="eingabe-gruppe"></select>
+        <p class="erklaerung">Warengruppe = die Sorte der Ausgabe. Zum Beispiel alles vom Supermarkt: das ist „Lebensmittel".</p>
+        <label for="eingabe-betrag">Wie viel? (in Euro)</label>
+        <input id="eingabe-betrag" inputmode="decimal" placeholder="zum Beispiel: 12,50" autocomplete="off">
+        <button type="button" class="foto-knopf" onclick="document.getElementById('quittung-eingabe').click()">📷 Quittung fotografieren oder auswählen (freiwillig)</button>
+        <input type="file" id="quittung-eingabe" accept="image/*" class="versteckt" onchange="fotoGewaehlt(event)">
+        <div id="foto-vorschau" class="foto-vorschau versteckt"></div>
+        <p class="erklaerung">Zweiter Weg: Du kannst ein Foto auch direkt hier anhängen. Dann tippe Datum und Betrag selbst. Das Foto wird auf deinem Gerät verkleinert gespeichert. Der einfachste Weg steht aber einen Katalog weiter unten: komplette Quittung aus dem Chat übernehmen.</p>
+        <button type="submit" class="knopf knopf-primaer" id="eintragen-knopf">Eintrag hinzufügen</button>
+        <button type="button" class="knopf knopf-leise versteckt" id="abbruch-knopf" onclick="bearbeitungAbbrechen()">Abbrechen</button>
+      </form>
+    </div>
+    <div class="karte">
+      <h2 class="karte-titel">📷 Quittung fotografieren und automatisch lesen</h2>
+      <p class="erklaerung">Mach ein Foto vom Kassenbon. Dein Handy liest den Text selbst und füllt damit den Block einen Katalog tiefer aus: Datum, Laden, Gesamtsumme und <b>jede einzelne Position mit Preis und Warengruppe</b>. Du musst nichts tippen.</p>
+      <p class="erklaerung">Wichtig zu wissen: Beim <b>ersten</b> Lesen lädt dein Handy das Leseprogramm aus dem Internet (einmalig, etwa 10 bis 20 MB). Danach bleibt es gespeichert und es geht auch offline. Das Foto bleibt immer auf deinem Gerät. Nach dem Lesen <b>prüfe den Block</b> und drücke dann darunter „Quittung übernehmen".</p>
+      <button type="button" class="foto-knopf" onclick="document.getElementById('ocr-eingabe').click()">📷 Foto machen oder auswählen und lesen</button>
+      <input type="file" id="ocr-eingabe" accept="image/*" capture="environment" class="versteckt" onchange="ocrFotoGewaehlt(event)">
+      <div id="ocr-status" class="hinweis-leise"></div>
+      <p class="hinweis-leise">Liest dein Browser das Programm nicht (zum Beispiel hier in der Vibe-App)? Dann nutze den Chat-Weg einen Katalog tiefer: Schick mir das Foto im Chat.</p>
+    </div>
+    <div class="karte">
+      <h2 class="karte-titel">Komplette Quittung übernehmen (ohne Tippen)</h2>
+      <p class="erklaerung">Zwei Wege führen hierher: (1) Die Foto-Karte oben liest die Quittung selbst. (2) Du schickst mir das Foto im Chat, ich lese alles aus (Datum, Laden, Gesamtbetrag und <b>jede einzelne Position mit Preis und Warengruppe</b>, mit Summen-Prüfung) und du bekommst von mir einen fertigen Block zum Kopieren.</p>
+      <textarea id="beleg-feld" placeholder="BELEG 27.11.2026 | REWE | 45,90&#10;Tee | 0,75 | Lebensmittel&#10;Milch | 1,29 | Lebensmittel"></textarea>
+      <button class="knopf knopf-leise" style="width:100%" onclick="belegEinfuegen()">Quittung übernehmen</button>
+      <div id="beleg-ergebnis" class="hinweis-leise"></div>
+    </div>
+    <div class="karte">
+      <h2 class="karte-titel">Mehrere Einträge auf einmal</h2>
+      <p class="erklaerung">Für alle, die lieber im Stück eintippen. Auch gut für fertige Listen, zum Beispiel aus dem Chat. Schreibe pro Zeile einen Einkauf:<br><b>Datum | Laden | Betrag | Warengruppe (freiwillig)</b></p>
+      <p class="erklaerung">Datum-Formen: 26.11.2026, heute oder gestern. Ohne Warengruppe erkenne ich bekannte Läden selbst.</p>
+      <textarea id="schnell-feld" placeholder="heute | REWE | 45,90&#10;heute | Bäckerei | 4,20 | Lebensmittel"></textarea>
+      <button class="knopf knopf-leise" style="width:100%" onclick="schnellHinzufuegen()">Zeilen hinzufügen</button>
+      <div id="schnell-ergebnis" class="hinweis-leise"></div>
+    </div>
+    <div id="eintrag-liste"></div>
+  </section>
+
+  <section class="tab-seite" id="tab-gruppen"><div id="inhalt-gruppen"></div></section>
+
+  <section class="tab-seite" id="tab-fixe">
+    <div id="inhalt-fixe"></div>
+    <div class="karte">
+      <h2 class="karte-titel" id="fix-form-titel">Feste Kosten hinzufügen</h2>
+      <p class="erklaerung">Art = die Untergruppe der festen Kosten. Sie gehört zu einem Bereich, zum Beispiel Strom zum Bereich Wohnen.</p>
+      <form onsubmit="return fixAbschicken(event)">
+        <label for="fix-kategorie">Was ist das für eine Art?</label>
+        <select id="fix-kategorie" onchange="fixKategorieGeaendert()"></select>
+        <div id="fix-eigene" class="versteckt">
+          <label for="fix-eigene-name">Name der eigenen Kategorie</label>
+          <input id="fix-eigene-name" placeholder="zum Beispiel: Hundesteuer">
+          <label for="fix-eigene-gruppe">Zu welchem Bereich gehört sie?</label>
+          <select id="fix-eigene-gruppe"></select>
+        </div>
+        <label for="fix-name">Wie heißt die Zahlung? (freiwillig, sonst nehme ich den Namen der Art)</label>
+        <input id="fix-name" placeholder="zum Beispiel: Autokredit der Bank">
+        <label for="fix-betrag">Wie viel? (in Euro)</label>
+        <input id="fix-betrag" inputmode="decimal" placeholder="zum Beispiel: 220">
+        <label for="fix-rythmus">Wie oft wird gezahlt?</label>
+        <select id="fix-rythmus">
+          <option value="monat">jeden Monat</option>
+          <option value="quartal">jedes Quartal (alle 3 Monate)</option>
+          <option value="jahr">jedes Jahr</option>
+        </select>
+        <button type="submit" class="knopf knopf-primaer" id="fix-knopf">Feste Kosten hinzufügen</button>
+        <button type="button" class="knopf knopf-leise versteckt" id="fix-abbruch" onclick="fixAbbrechen()">Abbrechen</button>
+      </form>
+    </div>
+    <div id="fix-liste"></div>
+  </section>
+
+  <section class="tab-seite" id="tab-pruefung"><div id="inhalt-pruefung"></div></section>
+  <section class="tab-seite" id="tab-tipps"><div id="inhalt-tipps"></div></section>
+</main>
+
+<div id="druck"></div>
+<div id="foto-modal" onclick="fotoSchliessen()">
+  <img id="foto-modal-bild" alt="Foto der Quittung" onclick="event.stopPropagation()">
+  <button class="knopf knopf-leise" onclick="event.stopPropagation(); fotoSchliessen()">Schließen</button>
+</div>
+<div id="pos-modal" onclick="posSchliessen()">
+  <div class="kasten" id="pos-kasten" onclick="event.stopPropagation()"></div>
+  <button class="knopf knopf-leise" onclick="posSchliessen()">Schließen</button>
+</div>
+<div id="toast"></div>
+<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION 27.11.2026 · FOTO-LESEN · UPDATE-SUCHE</p>
+<div class="fuss-update"><button type="button" class="mini-knopf" onclick="updateSuchen()">🔍 Nach Updates suchen</button><span class="hinweis-leise" id="update-hinweis"></span></div>
+
+<script>
+if (typeof window !== 'undefined') {
+  window.onerror = function (nachricht) {
+    try {
+      var k = document.getElementById('fehlerBox');
+      k.style.display = 'block';
+      k.textContent = 'Es gab einen Fehler in der App: ' + nachricht;
+    } catch (e) {}
+    return false;
+  };
+}
+
+'use strict';
+
+// ================= LOGIK-BEGINN (reine Funktionen, ohne Fenster und Dokument) =================
+
+var VERSION = 'VERSION 27.11.2026 · FOTO-LESEN · UPDATE-SUCHE';
+var SPEICHER_EINTRAEGE = 'hhb.eintraege';
+var SPEICHER_EINKOMMEN = 'hhb.einkommen';
+var SPEICHER_ART = 'hhb.zeitraum-art';
+var SPEICHER_FIXE = 'hhb.fixe';
+
+var GRUPPEN = [
+  { id: 'lebensmittel',   icon: '🥖', name: 'Lebensmittel & Getränke', farbe: '#22c55e' },
+  { id: 'drogerie',       icon: '🧴', name: 'Drogerie & Haushalt',      farbe: '#06b6d4' },
+  { id: 'wohnen',         icon: '🏠', name: 'Wohnen & Energie',         farbe: '#6366f1' },
+  { id: 'gesundheit',     icon: '💊', name: 'Gesundheit',              farbe: '#ef4444' },
+  { id: 'kleidung',       icon: '👕', name: 'Kleidung & Schuhe',        farbe: '#a855f7' },
+  { id: 'mobilitaet',     icon: '🚗', name: 'Mobilität & Auto',         farbe: '#f59e0b' },
+  { id: 'freizeit',       icon: '🎮', name: 'Freizeit & Hobby',        farbe: '#ec4899' },
+  { id: 'essenunterwegs', icon: '🍽️', name: 'Essen unterwegs',         farbe: '#f97316' },
+  { id: 'geschenke',      icon: '🎁', name: 'Geschenke & Feiern',      farbe: '#eab308' },
+  { id: 'sonstiges',      icon: '❓', name: 'Sonstiges',                farbe: '#94a3b8' }
+];
+
+var WOCHENTAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+var MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+var MONATE_KURZ = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+/* Bekannte Läden: Der Text im Feld "Wo?" sagt schon die Warengruppe. */
+var HAENDLER_HINT = [
+  ['rewe', 'lebensmittel'], ['edeka', 'lebensmittel'], ['aldi', 'lebensmittel'],
+  ['lidl', 'lebensmittel'], ['penny', 'lebensmittel'], ['netto', 'lebensmittel'],
+  ['kaufland', 'lebensmittel'], ['famila', 'lebensmittel'], ['tegut', 'lebensmittel'],
+  ['globus', 'lebensmittel'], ['real', 'lebensmittel'], ['wochenmarkt', 'lebensmittel'],
+  ['bäcker', 'lebensmittel'], ['backerei', 'lebensmittel'], ['backwerk', 'lebensmittel'],
+  ['metzger', 'lebensmittel'], ['fleischerei', 'lebensmittel'], ['getränke', 'lebensmittel'],
+  ['getraenke', 'lebensmittel'],
+  ['dm', 'drogerie'], ['rossmann', 'drogerie'], ['müller', 'drogerie'], ['mueller', 'drogerie'],
+  ['drogerie', 'drogerie'], ['frisör', 'drogerie'], ['frisoer', 'drogerie'],
+  ['apotheke', 'gesundheit'], ['apothek', 'gesundheit'], ['arzt', 'gesundheit'],
+  ['reformhaus', 'gesundheit'], ['sanitätshaus', 'gesundheit'],
+  ['h&m', 'kleidung'], ['zalando', 'kleidung'], ['c&a', 'kleidung'], ['c&a', 'kleidung'],
+  ['about you', 'kleidung'], ['new yorker', 'kleidung'], ['kik', 'kleidung'], ['tally', 'kleidung'],
+  ['shell', 'mobilitaet'], ['aral', 'mobilitaet'], ['esso', 'mobilitaet'], ['jet tank', 'mobilitaet'],
+  ['total', 'mobilitaet'], ['tanken', 'mobilitaet'], ['tankstelle', 'mobilitaet'],
+  ['deutsche bahn', 'mobilitaet'], ['fahrkarte', 'mobilitaet'], ['parkhaus', 'mobilitaet'],
+  ['parken', 'mobilitaet'], ['bus', 'mobilitaet'], ['bahnhof', 'mobilitaet'],
+  ['kino', 'freizeit'], ['theater', 'freizeit'], ['schwimmbad', 'freizeit'], ['freibad', 'freizeit'],
+  ['fitness', 'freizeit'], ['gym', 'freizeit'], ['decathlon', 'freizeit'], ['spielzeug', 'freizeit'],
+  ['netflix', 'freizeit'], ['spotify', 'freizeit'], ['zoo', 'freizeit'], ['ticket', 'freizeit'],
+  ['restaurant', 'essenunterwegs'], ['café', 'essenunterwegs'], ['cafe', 'essenunterwegs'],
+  ['bistro', 'essenunterwegs'], ['döner', 'essenunterwegs'], ['doener', 'essenunterwegs'],
+  ['pizza', 'essenunterwegs'], ['mcdonald', 'essenunterwegs'], ['burger king', 'essenunterwegs'],
+  ['lieferando', 'essenunterwegs'], ['uber eats', 'essenunterwegs'], ['wolt', 'essenunterwegs'],
+  ['kantine', 'essenunterwegs'], ['imbiss', 'essenunterwegs'], ['gasthaus', 'essenunterwegs'],
+  ['starbucks', 'essenunterwegs'], ['eiscafe', 'essenunterwegs'],
+  ['geschenk', 'geschenke'], ['blumen', 'geschenke'], ['feiern', 'geschenke'],
+  ['miete', 'wohnen'], ['stadtwerke', 'wohnen'], ['strom', 'wohnen'], ['gas ', 'wohnen'],
+  ['vattenfall', 'wohnen'], ['eon', 'wohnen'], ['enbw', 'wohnen'], ['wasser', 'wohnen'],
+  ['ikea', 'wohnen'], ['möbel', 'wohnen'], ['moebel', 'wohnen'], ['obi', 'wohnen'],
+  ['bauhaus', 'wohnen'], ['toom', 'wohnen'], ['hornbach', 'wohnen'], ['baumarkt', 'wohnen']
+];
+
+/* Spartipps je Warengruppe, in einfacher Sprache */
+var RAT = {
+  lebensmittel: 'Günstiger einkaufen: Kaufe Eigenmarken statt teurer Marken. Schreib dir vor dem Einkauf eine Liste. Geh nicht hungrig einkaufen. Vergleiche Preise, auch bei Discountern.',
+  drogerie: 'Viele Produkte gibt es als Eigenmarke des Ladens. Sie sind oft halb so teuer und genauso gut. Kaufe auf Vorrat, wenn etwas im Angebot ist.',
+  wohnen: 'Wohnen kostet meist am meisten. Prüf einmal im Jahr, ob Strom und Gas woanders günstiger sind. Kleine Geräte ganz ausmachen statt Standby.',
+  gesundheit: 'Frag in der Apotheke nach günstigeren Mitteln mit gleichem Wirkstoff. Sie heißen Generika. Frage auch, ob es Rabatte gibt.',
+  kleidung: 'Kaufe nur, was du wirklich brauchst. Im Sale und Second-Hand gibt es gute Kleidung für weniger Geld.',
+  mobilitaet: 'Fahr mit Bus, Bahn oder Fahrrad, wenn es geht. Eine Monatskarte ist oft günstiger als viele einzelne Fahrkarten.',
+  freizeit: 'Freizeit muss nicht teuer sein. Bibliothek, Park und Spaziergänge kosten nichts. Setz dir ein Fest-Budget für Freizeit im Monat.',
+  essenunterwegs: 'Selbst kochen ist meist viel günstiger. Nimm dir Essen von zu Hause mit. Lieferdienste kosten extra Gebühren. Abholen ist billiger als liefern lassen.',
+  geschenke: 'Plan Geschenke früher. Selbstgemachtes kostet wenig und kommt oft besser an.',
+  sonstiges: 'Schau dir diese Ausgaben genau an. Wenn du weißt, wofür sie sind, findest du eine passendere Warengruppe.'
+};
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function centAusEuro(text) {
+  if (text === null || text === undefined) return null;
+  var s = String(text).trim().replace(/\s|€/g, '');
+  if (s === '') return null;
+  if (s.indexOf(',') >= 0) {
+    s = s.replace(/\./g, ''); /* Punkte sind Tausender-Trennen */
+    s = s.replace(/,/g, '.'); /* Komma ist das echte Dezimal-Zeichen */
+  }
+  var zahl = parseFloat(s);
+  if (isNaN(zahl) || zahl < 0) return null;
+  return Math.round(zahl * 100);
+}
+
+function euroAusCent(cent) {
+  var negativ = cent < 0;
+  var c = Math.round(Math.abs(cent));
+  var euro = Math.floor(c / 100);
+  var rest = (c % 100);
+  var euroText = String(euro).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (negativ ? '-' : '') + euroText + ',' + (rest < 10 ? '0' : '') + rest + ' €';
+}
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function isoAusDatum(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function datumAusIso(iso) {
+  var t = String(iso).split('-');
+  return new Date(Number(t[0]), Number(t[1]) - 1, Number(t[2]), 12, 0, 0);
+}
+function heuteIso() { return isoAusDatum(new Date()); }
+function fmtDatum(iso) {
+  var t = String(iso).split('-');
+  return t[2] + '.' + t[1] + '.' + t[0];
+}
+function fmtDatumLang(iso) {
+  var d = datumAusIso(iso);
+  return WOCHENTAGE[d.getDay()] + ', ' + d.getDate() + '. ' + MONATE[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function tagStart(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0); }
+function wocheStart(d) {
+  var s = tagStart(d);
+  var versatz = (s.getDay() + 6) % 7; /* Montag ist Wochenanfang */
+  s.setDate(s.getDate() - versatz);
+  return s;
+}
+function quartalStart(d) {
+  var m = Math.floor(d.getMonth() / 3) * 3;
+  return new Date(d.getFullYear(), m, 1, 12, 0, 0);
+}
+function jahrStart(d) { return new Date(d.getFullYear(), 0, 1, 12, 0, 0); }
+function addTag(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+function addMonat(d, n) { return new Date(d.getFullYear(), d.getMonth() + n, 1, 12, 0, 0); }
+function tageZwischen(a, b) { return Math.round((b - a) / 86400000); }
+
+function zeitraumFuer(art, isoTag) {
+  var d = datumAusIso(isoTag);
+  var start, ende, titel, nameDavor;
+  if (art === 'tag') {
+    start = tagStart(d); ende = addTag(start, 1);
+    titel = fmtDatumLang(isoTag); nameDavor = 'am Tag davor';
+  } else if (art === 'woche') {
+    start = wocheStart(d); ende = addTag(start, 7);
+    var letzte = addTag(ende, -1);
+    titel = 'Woche: ' + fmtDatum(isoAusDatum(start)) + ' bis ' + fmtDatum(isoAusDatum(letzte));
+    nameDavor = 'in der Woche davor';
+  } else if (art === 'quartal') {
+    start = quartalStart(d); ende = addMonat(start, 3);
+    var q = Math.floor(start.getMonth() / 3) + 1;
+    titel = 'Quartal ' + q + ' (' + MONATE_KURZ[start.getMonth()] + ' bis ' + MONATE_KURZ[ende.getMonth() === 0 ? 11 : ende.getMonth() - 1] + ' ' + start.getFullYear() + ')';
+    nameDavor = 'im Quartal davor';
+  } else {
+    start = jahrStart(d); ende = new Date(d.getFullYear() + 1, 0, 1, 12, 0, 0);
+    titel = 'Jahr ' + d.getFullYear(); nameDavor = 'im Jahr davor';
+  }
+  return { art: art, startIso: isoAusDatum(start), endeIso: isoAusDatum(ende), titel: titel, nameDavor: nameDavor, tage: tageZwischen(start, ende) };
+}
+
+function zeitraumDavor(z) {
+  var startDavor;
+  if (z.art === 'tag') { startDavor = addTag(datumAusIso(z.startIso), -1); return zeitraumFuer('tag', isoAusDatum(startDavor)); }
+  if (z.art === 'woche') { startDavor = addTag(datumAusIso(z.startIso), -7); return zeitraumFuer('woche', isoAusDatum(startDavor)); }
+  if (z.art === 'quartal') { startDavor = addMonat(datumAusIso(z.startIso), -3); return zeitraumFuer('quartal', isoAusDatum(startDavor)); }
+  startDavor = new Date(datumAusIso(z.startIso).getFullYear() - 1, 0, 15, 12);
+  return zeitraumFuer('jahr', isoAusDatum(startDavor));
+}
+
+function eintraegeIm(liste, startIso, endeIso) {
+  return liste.filter(function (e) { return e.datum >= startIso && e.datum < endeIso; });
+}
+
+function summeCent(liste) {
+  return liste.reduce(function (s, e) { return s + e.cent; }, 0);
+}
+
+/* Ein Beleg kann mehrere Warengruppen haben: Positionen zählen getrennt. */
+function eintragGruppenBeitraege(e) {
+  if (e.positionen && e.positionen.length) {
+    var map = {};
+    e.positionen.forEach(function (p) {
+      var g = gruppeById(p.gruppe).id;
+      map[g] = (map[g] || 0) + p.cent;
+    });
+    return Object.keys(map).map(function (g) { return { gruppe: g, cent: map[g] }; });
+  }
+  return [{ gruppe: gruppeById(e.gruppe).id, cent: e.cent }];
+}
+
+function gruppenSummen(liste) {
+  var map = {};
+  liste.forEach(function (e) {
+    var gesehen = {};
+    eintragGruppenBeitraege(e).forEach(function (b) {
+      if (!map[b.gruppe]) map[b.gruppe] = { id: b.gruppe, cent: 0, zahl: 0 };
+      map[b.gruppe].cent += b.cent;
+      if (!gesehen[b.gruppe]) { map[b.gruppe].zahl += 1; gesehen[b.gruppe] = true; }
+    });
+  });
+  var erg = Object.keys(map).map(function (k) { return map[k]; });
+  erg.sort(function (a, b) { return b.cent - a.cent; });
+  return erg;
+}
+
+function gruppeById(id) {
+  for (var i = 0; i < GRUPPEN.length; i++) if (GRUPPEN[i].id === id) return GRUPPEN[i];
+  return GRUPPEN[GRUPPEN.length - 1];
+}
+
+function anteil(teil, ganz) {
+  if (!ganz) return 0;
+  return Math.round((teil / ganz) * 100);
+}
+
+function vergleichText(aktCent, vorCent, nameDavor) {
+  if (vorCent === 0) {
+    return 'Für den Zeitraum davor haben wir keine Zahlen. Beim nächsten Mal steht hier ein Vergleich.';
+  }
+  if (aktCent === vorCent) { return 'Genau so viel wie ' + nameDavor + '.'; }
+  var prozent = Math.round(Math.abs(aktCent - vorCent) / vorCent * 100);
+  if (aktCent > vorCent) { return prozent + ' % mehr als ' + nameDavor + ' (vorher: ' + euroAusCent(vorCent) + ').'; }
+  return prozent + ' % weniger als ' + nameDavor + ' (vorher: ' + euroAusCent(vorCent) + ').';
+}
+
+function gruppeVorschlag(laden) {
+  var t = String(laden || '').toLowerCase();
+  if (!t) return null;
+  for (var i = 0; i < HAENDLER_HINT.length; i++) {
+    if (t.indexOf(HAENDLER_HINT[i][0]) >= 0) return gruppeById(HAENDLER_HINT[i][1]);
+  }
+  return null;
+}
+
+function doppelteFinden(liste) {
+  var gesehen = {};
+  var doppelte = [];
+  liste.forEach(function (e) {
+    var schluessel = e.datum + '|' + e.cent + '|' + String(e.laden).toLowerCase();
+    if (gesehen[schluessel]) { doppelte.push(e); } else { gesehen[schluessel] = true; }
+  });
+  return doppelte;
+}
+
+function auffaelligkeiten(aktListe, vorListe) {
+  var erg = [];
+  if (!aktListe.length) return erg;
+  var total = summeCent(aktListe);
+  var summen = gruppenSummen(aktListe);
+  var top = summen[0];
+  if (top) {
+    erg.push('Am meisten ging für ' + gruppeById(top.id).icon + ' ' + gruppeById(top.id).name + ' drauf: ' + euroAusCent(top.cent) + ' (das sind ' + anteil(top.cent, total) + ' %).');
+  }
+  var groesster = aktListe.slice().sort(function (a, b) { return b.cent - a.cent; })[0];
+  if (groesster) {
+    erg.push('Der größte einzelne Einkauf: ' + euroAusCent(groesster.cent) + ' bei ' + groesster.laden + '.');
+  }
+  var vorMap = {};
+  gruppenSummen(vorListe).forEach(function (s) { vorMap[s.id] = s; });
+  var steigerung = null;
+  summen.forEach(function (s) {
+    var v = vorMap[s.id];
+    if (v && v.cent >= 500 && s.cent >= v.cent * 1.25) {
+      if (!steigerung || (s.cent - v.cent) > (steigerung.cent - steigerung.vorCent)) {
+        steigerung = { id: s.id, cent: s.cent, vorCent: v.cent };
+      }
+    }
+  });
+  if (steigerung) {
+    erg.push('Für ' + gruppeById(steigerung.id).name + ' waren es ' + Math.round((steigerung.cent / steigerung.vorCent - 1) * 100) + ' % mehr als im Zeitraum davor.');
+  }
+  return erg.slice(0, 3);
+}
+
+function pruefListe(liste, heuteIsoStr) {
+  var erg = [];
+  doppelteFinden(liste).forEach(function (e) {
+    erg.push({ typ: 'warn', icon: '⚠️', text: 'Möglicher doppelter Eintrag: ' + e.laden + ', ' + euroAusCent(e.cent) + ' am ' + fmtDatum(e.datum) + '. Lösche einen davon, falls er doppelt ist.' });
+  });
+  liste.forEach(function (e) {
+    if (e.datum > heuteIsoStr) {
+      erg.push({ typ: 'warn', icon: '⚠️', text: 'Ein Eintrag liegt in der Zukunft: ' + e.laden + ', ' + fmtDatum(e.datum) + '. Bitte prüfe das Datum.' });
+    }
+  });
+  liste.forEach(function (e) {
+    if (e.cent >= 20000) {
+      erg.push({ typ: 'info', icon: '🔎', text: 'Sehr großer Betrag: ' + euroAusCent(e.cent) + ' bei ' + e.laden + ' am ' + fmtDatum(e.datum) + '. Prüfe noch mal, ob er stimmt.' });
+    }
+  });
+  liste.forEach(function (e) {
+    if (e.positionen && e.positionen.length) {
+      var summePos = e.positionen.reduce(function (s, p) { return s + p.cent; }, 0);
+      if (summePos !== e.cent) {
+        erg.push({ typ: 'warn', icon: '⚠️', text: 'Beleg-Rechnung passt nicht: ' + e.laden + ' am ' + fmtDatum(e.datum) + '. Kasse: ' + euroAusCent(e.cent) + ', Positionen zusammen: ' + euroAusCent(summePos) + '. Bitte prüfen.' });
+      }
+    }
+  });
+  var total = summeCent(liste);
+  var sonst = liste.filter(function (e) { return e.gruppe === 'sonstiges'; });
+  var sonstCent = summeCent(sonst);
+  if (total >= 5000 && sonstCent / total >= 0.4) {
+    erg.push({ typ: 'info', icon: '🗂️', text: 'Viele Ausgaben liegen bei „Sonstiges" (' + anteil(sonstCent, total) + ' %). Schau sie dir an und wähle eine passendere Warengruppe.' });
+  }
+  if (erg.length === 0 && liste.length > 0) {
+    erg.push({ typ: 'gut', icon: '✅', text: 'Alles in Ordnung. Deine Einträge sehen sauber aus.' });
+  }
+  if (liste.length === 0) {
+    erg.push({ typ: 'info', icon: 'ℹ️', text: 'Es gibt noch nichts zu prüfen. Trage zuerst einen Einkauf ein.' });
+  }
+  return erg;
+}
+
+function tippsBerechnen(liste, einkommenCent, heuteIsoStr, fixeMonatCent) {
+  var fixMonat = fixeMonatCent || 0;
+  var tipps = [];
+  if (!liste.length) {
+    tipps.push({
+      icon: '👋', typ: 'info', titel: 'Fang mit deinem ersten Einkauf an',
+      text: 'Trage ein, was du heute ausgegeben hast. Nach ein paar Tagen erkennt die App deine Muster und kann dir zeigen, wo du sparen kannst.'
+    });
+    return tipps;
+  }
+  var heute = datumAusIso(heuteIsoStr);
+  var monatStart = new Date(heute.getFullYear(), heute.getMonth(), 1, 12, 0, 0);
+  var monatStartIso = isoAusDatum(monatStart);
+  var vorherStartIso = isoAusDatum(addMonat(monatStart, -1));
+  var akt = liste.filter(function (e) { return e.datum >= monatStartIso && !e.fix; });
+  var vor = liste.filter(function (e) { return e.datum >= vorherStartIso && e.datum < monatStartIso && !e.fix; });
+  var totalAkt = summeCent(akt);
+  var totalVor = summeCent(vor);
+  var summenAkt = gruppenSummen(akt);
+
+  if (totalAkt > 0 && summenAkt.length) {
+    var top = summenAkt[0];
+    var g = gruppeById(top.id);
+    tipps.push({
+      icon: g.icon, typ: 'info',
+      titel: 'Am meisten gibst du für ' + g.name + ' aus',
+      text: 'Diesen Monat bisher: ' + euroAusCent(top.cent) + ', das sind ' + anteil(top.cent, totalAkt) + ' % deiner Ausgaben. ' + (RAT[g.id] || '')
+    });
+    var restaurant = summenAkt.filter(function (s) { return s.id === 'essenunterwegs'; })[0];
+    if (restaurant && anteil(restaurant.cent, totalAkt) >= 12) {
+      tipps.push({
+        icon: '🍽️', typ: 'info', titel: 'Essen unterwegs frisst viel Geld',
+        text: 'Dafür hast du diesen Monat schon ' + euroAusCent(restaurant.cent) + ' ausgegeben (' + anteil(restaurant.cent, totalAkt) + ' %). Ein bis zwei Mal weniger essen gehen oder liefern lassen spart oft 20 bis 40 € im Monat.'
+      });
+    }
+    var vorMap = {};
+    gruppenSummen(vor).forEach(function (s) { vorMap[s.id] = s; });
+    var steigerung = null;
+    summenAkt.forEach(function (s) {
+      var v = vorMap[s.id];
+      if (v && v.cent >= 2000 && s.cent >= v.cent * 1.25) {
+        if (!steigerung || (s.cent - v.cent) > (steigerung.cent - steigerung.vorCent)) {
+          steigerung = { id: s.id, cent: s.cent, vorCent: v.cent };
+        }
+      }
+    });
+    if (steigerung) {
+      tipps.push({
+        icon: '📈', typ: 'warn', titel: 'Steigende Ausgaben bei ' + gruppeById(steigerung.id).name,
+        text: 'Diesen Monat gibst du dafür schon ' + euroAusCent(steigerung.cent) + ' aus. Im letzten Monat waren es bis Monatsende ' + euroAusCent(steigerung.vorCent) + '. Schau, ob das so bleiben soll.'
+      });
+    }
+    if (akt.length >= 15) {
+      tipps.push({
+        icon: '🛍️', typ: 'info', titel: 'Viele kleine Einkäufe',
+        text: 'Diesen Monat schon ' + akt.length + ' Einkäufe. Viele kleine Einkäufe summieren sich. Sammle Einkäufe und geh seltener, aber mit Liste. Das schützt vor spontanen Käufen.'
+      });
+    }
+  }
+
+  if (einkommenCent > 0) {
+    var rest = einkommenCent - fixMonat - totalAkt;
+    if (rest < 0) {
+      tipps.push({
+        icon: '🚨', typ: 'warn', titel: 'Du gibst mehr aus, als du hast',
+        text: 'Deine Ausgaben und festen Kosten sind diesen Monat zusammen schon höher als dein Geld im Monat: Einkäufe ' + euroAusCent(totalAkt) + ', feste Kosten ' + euroAusCent(fixMonat) + ', aber nur ' + euroAusCent(einkommenCent) + ' da. Schau in der Übersicht, wo das Geld hingeht. Prüfe zuerst die größten Ausgaben.'
+      });
+    } else {
+      var sparBetrag = Math.max(Math.round(rest / 10), 100);
+      tipps.push({
+        icon: '🐷', typ: 'gut', titel: 'Heb dir zuerst etwas zur Seite',
+        text: 'Diesen Monat bleiben bisher ' + euroAusCent(rest) + ' übrig. Heb dir davon gleich am Monatsanfang etwa ' + euroAusCent(sparBetrag) + ' beiseite. Was weg ist, gibst du nicht aus. Das beruhigt, wenn mal etwas kaputtgeht.'
+      });
+    }
+    if (fixMonat > 0 && fixMonat >= einkommenCent * 0.5) {
+      tipps.push({
+        icon: '📌', typ: 'warn', titel: 'Deine festen Kosten sind sehr hoch',
+        text: 'Sie brauchen ' + anteil(fixMonat, einkommenCent) + ' % deines Geldes im Monat (' + euroAusCent(fixMonat) + '). Schau im Tab „Fixkosten", ob alles nötig ist. Bei Krediten und Raten hilft früheres Abzahlen gegen die Zinsen. Bei Strom, Gas und Versicherungen hilft ein Preis-Vergleich.'
+      });
+    }
+  }
+
+  if (!tipps.length) {
+    tipps.push({
+      icon: '🌱', typ: 'gut', titel: 'Deine Ausgaben sehen ruhig aus',
+      text: 'Wir sehen gerade keine Auffälligkeiten. Trage weiter ein, dann wird die Hilfe mit der Zeit besser.'
+    });
+  }
+  return tipps;
+}
+
+function beispielEintraege() {
+  var t = new Date();
+  t.setHours(12, 0, 0, 0);
+  function vorTagen(n) { return isoAusDatum(addTag(t, -n)); }
+  return [
+    { datum: vorTagen(1), laden: 'REWE', gruppe: 'lebensmittel', cent: 4590 },
+    { datum: vorTagen(2), laden: 'Aldi', gruppe: 'lebensmittel', cent: 2314 },
+    { datum: vorTagen(2), laden: 'dm', gruppe: 'drogerie', cent: 1299 },
+    { datum: vorTagen(3), laden: 'Bäckerei', gruppe: 'lebensmittel', cent: 420 },
+    { datum: vorTagen(4), laden: 'Lieferando', gruppe: 'essenunterwegs', cent: 2450 },
+    { datum: vorTagen(5), laden: 'Shell', gruppe: 'mobilitaet', cent: 5230 },
+    { datum: vorTagen(6), laden: 'Penny', gruppe: 'lebensmittel', cent: 2145 },
+    { datum: vorTagen(8), laden: 'Restaurant', gruppe: 'essenunterwegs', cent: 3800 },
+    { datum: vorTagen(9), laden: 'Apotheke', gruppe: 'gesundheit', cent: 985 },
+    { datum: vorTagen(11), laden: 'Kino', gruppe: 'freizeit', cent: 1200 },
+    { datum: vorTagen(12), laden: 'H&M', gruppe: 'kleidung', cent: 2999 },
+    { datum: vorTagen(14), laden: 'IKEA', gruppe: 'wohnen', cent: 8900 },
+    { datum: vorTagen(16), laden: 'REWE', gruppe: 'lebensmittel', cent: 3877 },
+    { datum: vorTagen(18), laden: 'Getränkemarkt', gruppe: 'lebensmittel', cent: 1580 },
+    { datum: vorTagen(20), laden: 'Miete', gruppe: 'wohnen', cent: 78000 },
+    { datum: vorTagen(21), laden: 'Stadtwerke', gruppe: 'wohnen', cent: 3500 },
+    { datum: vorTagen(23), laden: 'Café', gruppe: 'essenunterwegs', cent: 480 },
+    { datum: vorTagen(35), laden: 'REWE', gruppe: 'lebensmittel', cent: 4120 },
+    { datum: vorTagen(36), laden: 'Aldi', gruppe: 'lebensmittel', cent: 2510 },
+    { datum: vorTagen(38), laden: 'Lieferando', gruppe: 'essenunterwegs', cent: 2890 },
+    { datum: vorTagen(40), laden: 'Shell', gruppe: 'mobilitaet', cent: 4870 },
+    { datum: vorTagen(42), laden: 'Restaurant', gruppe: 'essenunterwegs', cent: 2250 },
+    { datum: vorTagen(44), laden: 'Rossmann', gruppe: 'drogerie', cent: 1876 }
+  ];
+}
+
+/* ---------- Schnell-Erfassung: mehrere Zeilen auf einmal ---------- */
+
+var GRUPPEN_KURZ = [
+  ['supermarkt', 'lebensmittel'], ['trinken', 'lebensmittel'], ['markt', 'lebensmittel'],
+  ['auto', 'mobilitaet'], ['tanken', 'mobilitaet'], ['bus', 'mobilitaet'], ['bahn', 'mobilitaet'],
+  ['miete', 'wohnen'], ['strom', 'wohnen'], ['gas', 'wohnen'], ['heizung', 'wohnen'],
+  ['arzt', 'gesundheit'], ['apotheke', 'gesundheit'],
+  ['drogerie', 'drogerie'], ['putzen', 'drogerie'],
+  ['kleidung', 'kleidung'], ['schuhe', 'kleidung'],
+  ['hobby', 'freizeit'], ['sport', 'freizeit'],
+  ['restaurant', 'essenunterwegs'], ['café', 'essenunterwegs'], ['cafe', 'essenunterwegs'],
+  ['geschenk', 'geschenke'], ['feiern', 'geschenke'], ['blumen', 'geschenke'],
+  ['sonstiges', 'sonstiges']
+];
+
+function parseDatumFlex(text, heuteIsoStr) {
+  var t = String(text || '').trim().toLowerCase();
+  if (t === '' || t === 'heute') return heuteIsoStr;
+  if (t === 'gestern') return isoAusDatum(addTag(datumAusIso(heuteIsoStr), -1));
+  var m = t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (m) return m[3] + '-' + pad2(m[2]) + '-' + pad2(m[1]);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  return null;
+}
+
+function gruppeAusText(text) {
+  var t = String(text || '').toLowerCase().trim();
+  if (!t) return null;
+  for (var i = 0; i < GRUPPEN.length; i++) {
+    if (t.indexOf(GRUPPEN[i].id) >= 0 || t.indexOf(GRUPPEN[i].name.toLowerCase()) >= 0) return GRUPPEN[i];
+  }
+  for (var j = 0; j < GRUPPEN_KURZ.length; j++) {
+    if (t.indexOf(GRUPPEN_KURZ[j][0]) >= 0) return gruppeById(GRUPPEN_KURZ[j][1]);
+  }
+  return null;
+}
+
+/* Eine Zeile = ein Einkauf: Datum | Laden | Betrag | Warengruppe (freiwillig) */
+function schnellZeilenParse(text, heuteIsoStr) {
+  var zeilen = String(text || '').split(/\r?\n/).map(function (z) { return z.trim(); })
+    .filter(function (z) { return z !== ''; });
+  var ok = [], fehler = [];
+  zeilen.forEach(function (zeile, nr) {
+    var teile = zeile.split('|').map(function (t) { return t.trim(); });
+    if (teile.length < 3) {
+      fehler.push('Zeile ' + (nr + 1) + ': Es fehlt etwas. Schreibe: Datum | Laden | Betrag.');
+      return;
+    }
+    var datum = parseDatumFlex(teile[0], heuteIsoStr);
+    if (!datum) {
+      fehler.push('Zeile ' + (nr + 1) + ': Das Datum "' + teile[0] + '" ist unklar. Schreibe es so: 26.11.2026 oder "heute".');
+      return;
+    }
+    var cent = centAusEuro(teile[2]);
+    if (cent === null || cent === 0) {
+      fehler.push('Zeile ' + (nr + 1) + ': "' + teile[2] + '" ist kein gültiger Preis.');
+      return;
+    }
+    var gruppe = null, ohneHinweis = false;
+    if (teile.length >= 4 && teile[3]) {
+      var g = gruppeAusText(teile[3]);
+      if (!g) {
+        fehler.push('Zeile ' + (nr + 1) + ': Die Warengruppe "' + teile[3] + '" kenne ich nicht. Lass das Feld weg, dann schaue ich, was der Laden verrät.');
+        return;
+      }
+      gruppe = g.id;
+    } else {
+      var v = gruppeVorschlag(teile[1]);
+      if (v) { gruppe = v.id; } else { gruppe = 'sonstiges'; ohneHinweis = true; }
+    }
+    ok.push({ datum: datum, laden: teile[1] || 'Ohne Angabe', gruppe: gruppe, cent: cent, ohneHinweis: ohneHinweis });
+  });
+  return { ok: ok, fehler: fehler };
+}
+
+/* ---------- Feste Kosten (Fixkosten): eigene Untergruppen mit Bereich ---------- */
+
+var FIX_KATEGORIEN = [
+  { id: 'miete', icon: '🏠', name: 'Miete', gruppe: 'wohnen' },
+  { id: 'nebenkosten', icon: '🧾', name: 'Nebenkosten', gruppe: 'wohnen' },
+  { id: 'strom', icon: '🔌', name: 'Strom', gruppe: 'wohnen' },
+  { id: 'gas', icon: '🔥', name: 'Gas / Heizung', gruppe: 'wohnen' },
+  { id: 'wasser', icon: '💧', name: 'Wasser', gruppe: 'wohnen' },
+  { id: 'internet', icon: '🌐', name: 'Internet & Telefon', gruppe: 'wohnen' },
+  { id: 'handy', icon: '📱', name: 'Handy-Vertrag', gruppe: 'wohnen' },
+  { id: 'streaming', icon: '📺', name: 'Streaming & Abos', gruppe: 'freizeit' },
+  { id: 'versicherung', icon: '🛡️', name: 'Versicherungen', gruppe: 'sonstiges' },
+  { id: 'kredit', icon: '🏦', name: 'Kredit / Darlehen', gruppe: 'sonstiges' },
+  { id: 'ratenkauf', icon: '💳', name: 'Ratenkauf', gruppe: 'sonstiges' },
+  { id: 'autoraten', icon: '🚗', name: 'Auto-Raten / Leasing', gruppe: 'mobilitaet' },
+  { id: 'oepnv', icon: '🚌', name: 'Monatskarte Bus & Bahn', gruppe: 'mobilitaet' },
+  { id: 'eigene', icon: '✏️', name: 'Eigene Kategorie', gruppe: 'sonstiges' }
+];
+
+var RYTHMEN = [
+  { id: 'monat', name: 'jeden Monat' },
+  { id: 'quartal', name: 'jedes Quartal (alle 3 Monate)' },
+  { id: 'jahr', name: 'jedes Jahr' }
+];
+
+function fixKategorieById(id) {
+  for (var i = 0; i < FIX_KATEGORIEN.length; i++) if (FIX_KATEGORIEN[i].id === id) return FIX_KATEGORIEN[i];
+  return FIX_KATEGORIEN[FIX_KATEGORIEN.length - 1];
+}
+function fixKategorieGueltig(id) {
+  for (var i = 0; i < FIX_KATEGORIEN.length; i++) if (FIX_KATEGORIEN[i].id === id) return true;
+  return false;
+}
+function rythmusName(r) {
+  for (var i = 0; i < RYTHMEN.length; i++) if (RYTHMEN[i].id === r) return RYTHMEN[i].name;
+  return 'jeden Monat';
+}
+/* Ø pro Monat: Quartal = geteilt durch 3, Jahr = geteilt durch 12 */
+function fixMonatsCent(f) {
+  if (f.rythmus === 'jahr') return Math.round(f.cent / 12);
+  if (f.rythmus === 'quartal') return Math.round(f.cent / 3);
+  return f.cent;
+}
+function fixeSollMonat(fixeListe) {
+  return (fixeListe || []).reduce(function (s, f) { return s + fixMonatsCent(f); }, 0);
+}
+function fixName(f) {
+  if (f.kategorie === 'eigene') return f.eigName || f.name || 'Eigene Kategorie';
+  return f.name || fixKategorieById(f.kategorie).name;
+}
+function fixGruppe(f) {
+  if (f.kategorie === 'eigene') return gruppeById(f.eigGruppe).id;
+  return fixKategorieById(f.kategorie).gruppe;
+}
+/* Wurde diese feste Kosten in diesem Kalendermonat schon in Einträge übernommen? */
+function fixSchonImMonat(liste, fixId, heuteIsoStr) {
+  var monat = String(heuteIsoStr).slice(0, 7);
+  return (liste || []).some(function (e) { return e.fix === fixId && String(e.datum).slice(0, 7) === monat; });
+}
+
+/* Monats-Bilanz: Einnahmen minus Ausgaben im laufenden Kalendermonat.
+   Einkäufe mit 📌 (aus dem Tab Fixkosten übernommen) zählen zu den festen Kosten,
+   damit nichts doppelt gezählt wird. */
+function monatsBilanz(liste, einkommenCent, heuteIsoStr, fixeListe) {
+  var heute = datumAusIso(heuteIsoStr);
+  var start = new Date(heute.getFullYear(), heute.getMonth(), 1, 12, 0, 0);
+  var startIso = isoAusDatum(start);
+  var endeIso = isoAusDatum(addMonat(start, 1));
+  var alle = eintraegeIm(liste, startIso, endeIso);
+  var einkaeufe = alle.filter(function (e) { return !e.fix; });
+  var ausgaben = summeCent(einkaeufe);
+  var fixe = fixeSollMonat(fixeListe);
+  return {
+    einnahmen: einkommenCent,
+    fixe: fixe,
+    ausgaben: ausgaben,
+    rest: einkommenCent - fixe - ausgaben,
+    monat: MONATE[start.getMonth()] + ' ' + start.getFullYear()
+  };
+}
+
+/* ---------- Beleg-Import: komplette Quittung aus dem Chat ----------
+   Format (erste Zeile Kopf, danach eine Zeile pro Position):
+   BELEG 26.11.2026 | REWE | 45,90
+   Tee | 0,75 | lebensmittel */
+function belegParse(text, heuteIsoStr) {
+  var zeilen = String(text || '').split(/\r?\n/).map(function (z) { return z.trim(); })
+    .filter(function (z) { return z !== ''; });
+  var fehler = [];
+  if (!zeilen.length || zeilen[0].toUpperCase().indexOf('BELEG') !== 0) {
+    fehler.push('Die erste Zeile muss mit BELEG beginnen, so: BELEG 26.11.2026 | REWE | 45,90');
+    return { beleg: null, fehler: fehler, summePos: 0, diff: 0 };
+  }
+  var kopfTeile = zeilen[0].replace(/^BELEG/i, '').trim().split('|').map(function (t) { return t.trim(); });
+  if (kopfTeile.length < 3) {
+    fehler.push('In der BELEG-Zeile fehlt etwas. So gehört sie: BELEG Datum | Laden | Gesamtsumme');
+    return { beleg: null, fehler: fehler, summePos: 0, diff: 0 };
+  }
+  var datum = parseDatumFlex(kopfTeile[0], heuteIsoStr);
+  if (!datum) { fehler.push('Das Datum "' + kopfTeile[0] + '" ist unklar. Schreibe es so: 26.11.2026 oder "heute".'); return { beleg: null, fehler: fehler, summePos: 0, diff: 0 }; }
+  var gesamt = centAusEuro(kopfTeile[2]);
+  if (gesamt === null || gesamt === 0) { fehler.push('Die Gesamtsumme "' + kopfTeile[2] + '" ist kein gültiger Betrag.'); return { beleg: null, fehler: fehler, summePos: 0, diff: 0 }; }
+  var positionen = [];
+  for (var i = 1; i < zeilen.length; i++) {
+    var teile = zeilen[i].split('|').map(function (t) { return t.trim(); });
+    if (teile.length < 2) { fehler.push('Zeile ' + (i + 1) + ' ("' + zeilen[i] + '"): braucht Name | Betrag | Warengruppe.'); continue; }
+    var cent = centAusEuro(teile[1]);
+    if (cent === null) { fehler.push('Zeile ' + (i + 1) + ': Der Betrag "' + teile[1] + '" ist kein gültiger Preis.'); continue; }
+    var gruppe = 'sonstiges';
+    if (teile.length >= 3 && teile[2]) {
+      var g = gruppeAusText(teile[2]);
+      if (!g) { fehler.push('Zeile ' + (i + 1) + ': Die Warengruppe "' + teile[2] + '" kenne ich nicht.'); continue; }
+      gruppe = g.id;
+    }
+    positionen.push({ name: teile[0].slice(0, 60), cent: cent, gruppe: gruppe });
+  }
+  var summePos = positionen.reduce(function (s, p) { return s + p.cent; }, 0);
+  /* Vorherrschende Warengruppe = Gruppe mit dem größten Positionen-Betrag */
+  var gMap = {};
+  positionen.forEach(function (p) { gMap[p.gruppe] = (gMap[p.gruppe] || 0) + p.cent; });
+  var dominante = 'sonstiges', maxCent = -1;
+  Object.keys(gMap).forEach(function (g) { if (gMap[g] > maxCent) { maxCent = gMap[g]; dominante = g; } });
+  return {
+    beleg: {
+      datum: datum,
+      laden: (kopfTeile[1] || 'Ohne Angabe').slice(0, 60),
+      gruppe: dominante,
+      cent: gesamt,
+      positionen: positionen
+    },
+    fehler: fehler,
+    summePos: summePos,
+    diff: gesamt - summePos
+  };
+}
+
+/* ---------- Automatisches Quittung-Lesen: erkannten Text in einen Beleg-Block umwandeln ---------- */
+
+/* Artikel-Worte, die ihre Warengruppe verraten. Gilt innerhalb eines Ladens,
+   zum Beispiel Zahnpasta im Supermarkt = Drogerie & Haushalt. */
+var WAREN_HINT = [
+  ['zahnpasta', 'drogerie'], ['zahnburst', 'drogerie'], ['zahnarzt', 'gesundheit'], ['zahnbürst', 'drogerie'],
+  ['shampoo', 'drogerie'], ['duschgel', 'drogerie'], ['seife', 'drogerie'], ['deo', 'drogerie'],
+  ['rasier', 'drogerie'], ['windel', 'drogerie'], ['tampon', 'drogerie'], ['binden', 'drogerie'],
+  ['klopapier', 'drogerie'], ['toilettenpapier', 'drogerie'], ['putzmittel', 'drogerie'], ['spülmittel', 'drogerie'],
+  ['waschmittel', 'drogerie'], ['weichspüler', 'drogerie'], ['haarspül', 'drogerie'], ['mundwasser', 'drogerie'],
+  ['aspirin', 'gesundheit'], ['paracetamol', 'gesundheit'], ['ibuprofen', 'gesundheit'], ['salbe', 'gesundheit'],
+  ['pflaster', 'gesundheit'], ['tabletten', 'gesundheit'], ['vitamin', 'gesundheit'], ['hustensaft', 'gesundheit'],
+  ['rezeptur', 'gesundheit'], ['medikam', 'gesundheit'],
+  ['socken', 'kleidung'], ['shirt', 'kleidung'], ['hose', 'kleidung'], ['jacke', 'kleidung'], ['schuh', 'kleidung'],
+  ['benzin', 'mobilitaet'], ['diesel', 'mobilitaet'], ['super e5', 'mobilitaet'], ['super e10', 'mobilitaet'],
+  ['ticket', 'freizeit'], ['kinokarte', 'freizeit']
+];
+
+function warenGruppeAusName(name, standardId) {
+  var t = String(name || '').toLowerCase();
+  for (var i = 0; i < WAREN_HINT.length; i++) {
+    if (t.indexOf(WAREN_HINT[i][0]) >= 0) return WAREN_HINT[i][1];
+  }
+  return standardId;
+}
+
+/* Findet am Ende einer Zeile einen Preis (auch mit Tausender-Punkt oder A/B-Kürzel dahinter). */
+function preisAmZeilenende(zeile) {
+  var treffer = String(zeile || '').match(/(\d+(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2})\s*[AB]?\s*$/);
+  if (!treffer) return null;
+  var cent = centAusEuro(treffer[1]);
+  return cent === null ? null : cent;
+}
+
+function belegAusText(rohtext, heuteIsoStr) {
+  var zeilen = String(rohtext || '').split(/\r?\n/).map(function (z) { return z.trim(); })
+    .filter(function (z) { return z !== ''; });
+  var hinweise = [];
+  if (!zeilen.length) { return { block: '', positionen: [], hinweise: ['Es wurde kein Text erkannt.'] }; }
+
+  var SUMMEN_WORTE = /summe|gesamt|total|endbetrag|endsumme|zu zahlen|zahlbetrag/i;
+  var ZAHL_WORTE = /bar\b|ec[\s-]*karte|maestro|visa|mastercard|gezahl|gegeb|rückgeld|ruckgeld|wechselgeld|unterschrift|automat|terminal|kartenzahlung|punkte|bonus|rabatt|pfandgesamt|nv\s*steuer|mws|steuer/i;
+
+  /* 1) Kassen-Summe suchen: letzte Zeile mit Summen-Wort und Preis. */
+  var gesamtCent = null;
+  for (var i = zeilen.length - 1; i >= 0; i--) {
+    if (SUMMEN_WORTE.test(zeilen[i])) {
+      var p = preisAmZeilenende(zeilen[i]);
+      if (p !== null) { gesamtCent = p; break; }
+    }
+  }
+
+  /* 2) Datum suchen (in den ersten Zeilen, auch mit 2-stelligem Jahr). */
+  var datumIso = heuteIsoStr;
+  for (var d = 0; d < Math.min(8, zeilen.length); d++) {
+    var m = zeilen[d].match(/(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{2,4})/);
+    if (m && Number(m[1]) >= 1 && Number(m[1]) <= 31 && Number(m[2]) >= 1 && Number(m[2]) <= 12) {
+      var jahr = m[3].length === 2 ? ('20' + m[3]) : m[3];
+      datumIso = jahr + '-' + pad2(Number(m[2])) + '-' + pad2(Number(m[1]));
+      break;
+    }
+  }
+  if (datumIso === heuteIsoStr) { hinweise.push('Datum nicht sicher erkannt, deshalb heute eingesetzt. Bitte prüfen.'); }
+
+  /* 3) Laden suchen: erste Zeile ohne Preis, ohne Summen- und Zahl-Wort. Sonst bekannten Laden im ganzen Text raten. */
+  var laden = '';
+  for (var s = 0; s < Math.min(5, zeilen.length); s++) {
+    if (preisAmZeilenende(zeilen[s]) !== null) continue;
+    if (SUMMEN_WORTE.test(zeilen[s]) || ZAHL_WORTE.test(zeilen[s])) continue;
+    var kandidat = zeilen[s].replace(/[^A-Za-zÄÖÜäöüß0-9&\s.\-']/g, ' ').replace(/\s+/g, ' ').trim();
+    if (kandidat.length >= 2 && kandidat.length <= 40 && /[A-Za-zÄÖÜäöüß]/.test(kandidat)) { laden = kandidat; break; }
+  }
+  if (!laden) {
+    for (var h = 0; h < zeilen.length; h++) {
+      var gr = gruppeVorschlag(zeilen[h]);
+      if (gr) {
+        var gros = zeilen[h].replace(/[^A-Za-zÄÖÜäöüß0-9&\s.\-']/g, ' ').replace(/\s+/g, ' ').trim();
+        if (gros) { laden = gros.slice(0, 40); break; }
+      }
+    }
+  }
+  if (!laden) { laden = 'Unbekannter Laden'; hinweise.push('Laden nicht erkannt. Bitte eintragen.'); }
+
+  /* 4) Standard-Warengruppe des Ladens (REWE = Lebensmittel, dm = Drogerie …). */
+  var ladenGruppe = gruppeVorschlag(laden);
+  var standardGruppe = ladenGruppe ? ladenGruppe.id : 'lebensmittel';
+
+  /* 5) Positionen sammeln: Zeilen mit Preis, die keine Summen- oder Zahl-Zeile sind. */
+  var positionen = [];
+  for (var z = 0; z < zeilen.length; z++) {
+    var zeile = zeilen[z];
+    var cent = preisAmZeilenende(zeile);
+    if (cent === null) continue;
+    if (SUMMEN_WORTE.test(zeile)) continue;
+    if (ZAHL_WORTE.test(zeile)) continue;
+    if (gesamtCent !== null && cent === gesamtCent && positionen.length > 0 && /endbetrag|zu zahlen|zahlbetrag/i.test(zeile)) continue;
+    var name = zeile.replace(/(\d+(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2})\s*[AB]?\s*$/, '').trim();
+    /* Ein klares „x“ bedeutet: Menge mal Einzelpreis, zum Beispiel „2 x 1,50“ = 3,00 €.
+       Eine Zahl ohne „x“ (zum Beispiel „2 TEE 1,50“) lasse ich unverändert, weil Kassen
+       dort meist den Zeilen-Preis drucken. Der Summen-Check fragt bei Abweichungen nach. */
+    var menge = 1;
+    var mengeTreffer = name.match(/^(\d{1,2})\s*[x*×]\s*/i);
+    if (mengeTreffer) { menge = Number(mengeTreffer[1]); name = name.slice(mengeTreffer[0].length).trim(); }
+    name = name.replace(/[^A-Za-zÄÖÜäöüß0-9&+.\-'\s()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (name === '' || !/[A-Za-zÄÖÜäöüß]/.test(name)) {
+      if (menge > 1) { name = 'Artikel'; } else { continue; }
+    }
+    positionen.push({ name: name.slice(0, 60), cent: cent * (menge > 1 ? menge : 1), gruppe: warenGruppeAusName(name, standardGruppe) });
+  }
+
+  /* 6) Gesamtsumme: erkannt oder aus Positionen zusammengezählt. */
+  if (gesamtCent === null && positionen.length) {
+    gesamtCent = positionen.reduce(function (sum, pos) { return sum + pos.cent; }, 0);
+    hinweise.push('Keine Kassen-Summe erkannt. Ich habe die Positionen zusammengezählt. Bitte prüfen.');
+  }
+
+  /* 7) Beleg-Block bauen (genau das Format, das belegParse versteht). */
+  if (!positionen.length) {
+    return { block: '', positionen: [], datumIso: datumIso, laden: laden, gesamtCent: gesamtCent,
+      hinweise: hinweise.concat(['Ich habe keine Positionen mit Preisen erkannt. Du kannst den Block selbst tippen oder mir das Foto im Chat schicken.']) };
+  }
+  var zeilenListe = ['BELEG ' + fmtDatum(datumIso) + ' | ' + laden + ' | ' + euroAusCent(gesamtCent === null ? 0 : gesamtCent)];
+  positionen.forEach(function (pos) {
+    zeilenListe.push(pos.name + ' | ' + euroAusCent(pos.cent) + ' | ' + pos.gruppe);
+  });
+  return { block: zeilenListe.join('\n'), positionen: positionen, datumIso: datumIso, laden: laden, gesamtCent: gesamtCent, hinweise: hinweise };
+}
+
+// ================= LOGIK-ENDE =================
+
+/* ---------- Zustand und Speicher ---------- */
+var ST = {
+  eintraege: [],
+  einkommen: 0,
+  tab: 'uebersicht',
+  art: 'woche',
+  anker: heuteIso(),
+  bearbeitetId: null,
+  neuesFoto: null,
+  fixe: [],
+  fixBearbeitetId: null
+};
+var zaehler = 0;
+
+function speichern(n, wert) {
+  try { localStorage.setItem(n, JSON.stringify(wert)); return true; } catch (e) { return false; }
+}
+function ladenK(n, standard) {
+  try {
+    var roh = localStorage.getItem(n);
+    if (roh === null || roh === undefined) return standard;
+    var wert = JSON.parse(roh);
+    return wert === null || wert === undefined ? standard : wert;
+  } catch (e) { return standard; }
+}
+function zustandLaden() {
+  ST.eintraege = ladenK(SPEICHER_EINTRAEGE, []);
+  if (!Array.isArray(ST.eintraege)) ST.eintraege = [];
+  ST.einkommen = ladenK(SPEICHER_EINKOMMEN, 0) || 0;
+  ST.art = ladenK(SPEICHER_ART, 'woche');
+  if (['tag', 'woche', 'quartal', 'jahr'].indexOf(ST.art) < 0) ST.art = 'woche';
+  ST.fixe = ladenK(SPEICHER_FIXE, []);
+  if (!Array.isArray(ST.fixe)) ST.fixe = [];
+  ST.fixe = ST.fixe.filter(function (f) { return f && typeof f.cent === 'number' && f.cent >= 0; }).map(function (f, i) {
+    return {
+      id: f.id || ('f' + Date.now() + '_' + i),
+      name: String(f.name || 'Feste Kosten').slice(0, 60),
+      kategorie: fixKategorieGueltig(f.kategorie) ? f.kategorie : 'eigene',
+      eigName: typeof f.eigName === 'string' ? f.eigName.slice(0, 60) : '',
+      eigGruppe: gruppeById(f.eigGruppe).id,
+      cent: Math.round(f.cent),
+      rythmus: ['monat', 'quartal', 'jahr'].indexOf(f.rythmus) >= 0 ? f.rythmus : 'monat'
+    };
+  });
+}
+
+/* ---------- Fehler und Toast ---------- */
+function zeigeFehler(f) {
+  try {
+    var k = document.getElementById('fehlerBox');
+    k.style.display = 'block';
+    k.textContent = 'Es gab einen Fehler: ' + (f && f.message ? f.message : f);
+  } catch (e) {}
+}
+function toast(text) {
+  try {
+    var t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('zeigen');
+    setTimeout(function () { t.classList.remove('zeigen'); }, 2600);
+  } catch (e) {}
+}
+
+/* ---------- Update-Suche (nutzt die feste Heimat der Web-App) ----------
+   In der Web-App liegt neben der App eine kleine Datei VERSION.txt.
+   Beim Antippen holt die App sie und vergleicht mit ihrer eigenen Version. */
+function updateSuchen() {
+  try {
+    var hinweis = document.getElementById('update-hinweis');
+    if (typeof fetch === 'undefined') {
+      hinweis.textContent = 'Dieser Browser kann leider nicht nach Updates suchen.';
+      return;
+    }
+    hinweis.textContent = 'Suche nach Updates …';
+    fetch('VERSION.txt', { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) {
+        hinweis.textContent = 'Hier gibt es keine Update-Info. Das Update-Suchen funktioniert in der Web-App auf deinem Startbildschirm.';
+        return null;
+      }
+      return r.text();
+    }).then(function (t) {
+      if (t === null || t === undefined) { return; }
+      var neu = String(t).trim();
+      if (neu.indexOf('VERSION') !== 0) {
+        hinweis.textContent = 'Die Versions-Info ließ sich nicht lesen.';
+        return;
+      }
+      if (neu === VERSION) {
+        hinweis.textContent = 'Deine App ist auf dem neuesten Stand ✓ (' + VERSION + ')';
+        return;
+      }
+      hinweis.textContent = 'Es gibt eine neuere Version: ' + neu + '. Lade die Seite einmal neu, dann ist sie da.';
+      toast('Neue Version verfügbar');
+    }).catch(function () {
+      hinweis.textContent = 'Update-Suche klappt gerade nicht. Vielleicht kein Internet, oder du bist nicht in der Web-App.';
+    });
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Tabs ---------- */
+var TABS = ['uebersicht', 'eintraege', 'gruppen', 'fixe', 'pruefung', 'tipps'];
+function zeigeTab(name) {
+  try {
+    ST.tab = name;
+    TABS.forEach(function (t) {
+      var seite = document.getElementById('tab-' + t);
+      var knopf = document.getElementById('nav-' + t);
+      if (seite) seite.classList.toggle('aktiv', t === name);
+      if (knopf) knopf.classList.toggle('aktiv', t === name);
+    });
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Zeitraum-Bedienelemente ---------- */
+function artWaehlen(art) {
+  try {
+    ST.art = art;
+    ST.anker = heuteIso();
+    speichern(SPEICHER_ART, art);
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+function ankerVerschieben(n) {
+  try {
+    var d = datumAusIso(ST.anker);
+    var x;
+    if (ST.art === 'tag') x = addTag(d, n);
+    else if (ST.art === 'woche') x = addTag(wocheStart(d), 7 * n);
+    else if (ST.art === 'quartal') x = addMonat(quartalStart(d), 3 * n);
+    else x = new Date(d.getFullYear() + n, 0, 15, 12);
+    ST.anker = isoAusDatum(x);
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+function ankerZurueck() { ankerVerschieben(-1); }
+function ankerVor() { ankerVerschieben(1); }
+function ankerHeute() {
+  try { ST.anker = heuteIso(); renderAlles(); } catch (f) { zeigeFehler(f); }
+}
+
+function zeitWahlHtml(z) {
+  var istHeute = ST.anker === heuteIso();
+  var html = '<div class="zeit-reihe">' +
+    '<button class="pfeil-knopf" onclick="ankerZurueck()" aria-label="Zeitraum davor">←</button>' +
+    '<div class="segment">' +
+    segmentKnopf('tag', 'Tag', z) + segmentKnopf('woche', 'Woche', z) +
+    segmentKnopf('quartal', 'Quartal', z) + segmentKnopf('jahr', 'Jahr', z) +
+    '</div>' +
+    '<button class="pfeil-knopf" onclick="ankerVor()" aria-label="Zeitraum danach">→</button>' +
+    '</div>' +
+    '<p class="zeit-titel">' + esc(z.titel) + '</p>' +
+    '<div class="zeit-unter"><span class="erklaerung" style="margin-top:0">Zeitraum = der Abschnitt, den du gerade anschaust. Ein Quartal sind 3 Monate.</span>' +
+    (istHeute ? '' : '<button class="mini-knopf" onclick="ankerHeute()">Heute</button>') +
+    '</div>';
+  return html;
+}
+function segmentKnopf(art, name, z) {
+  return '<button class="seg-knopf' + (z.art === art ? ' aktiv' : '') + '" onclick="artWaehlen(\'' + art + '\')">' + name + '</button>';
+}
+
+/* Gemeinsame Karte: Einnahmen, Feste Kosten, Einkäufe, Rest */
+function bilanzKarteHtml() {
+  var bilanz = monatsBilanz(ST.eintraege, ST.einkommen, heuteIso(), ST.fixe);
+  return '<div class="karte">' +
+    '<h2 class="karte-titel-klein">Dein Geld im ' + esc(bilanz.monat) + '</h2>' +
+    '<div class="stat-reihe vier">' +
+    '<div class="stat-kasten"><div class="zahl">' + euroAusCent(bilanz.einnahmen) + '</div><div class="text">Einnahmen im Monat</div></div>' +
+    '<div class="stat-kasten"><div class="zahl">' + euroAusCent(bilanz.fixe) + '</div><div class="text">Feste Kosten im Monat</div></div>' +
+    '<div class="stat-kasten"><div class="zahl">' + euroAusCent(bilanz.ausgaben) + '</div><div class="text">Einkäufe im Monat</div></div>' +
+    '<div class="stat-kasten"><div class="zahl" style="color:' + (bilanz.rest >= 0 ? 'var(--gruen)' : 'var(--rot)') + '">' + euroAusCent(bilanz.rest) + '</div><div class="text">Rest</div></div>' +
+    '</div>' +
+    '<p class="erklaerung">Rest = Einnahmen minus feste Kosten minus Einkäufe. Ist der Rest rot und mit Minus-Zeichen, war mehr weg, als Geld da war. Mit 📌 aus dem Tab „Fixkosten" übernommene Zahlungen zählen nur einmal (bei den festen Kosten). Deine Einnahmen kannst du im Tab „Tipps" ändern.</p>' +
+    '</div>';
+}
+
+/* ---------- Übersicht ---------- */
+function renderUebersicht() {
+  var ziel = document.getElementById('inhalt-uebersicht');
+  var z = zeitraumFuer(ST.art, ST.anker);
+  var zv = zeitraumDavor(z);
+  var akt = eintraegeIm(ST.eintraege, z.startIso, z.endeIso);
+  var vor = eintraegeIm(ST.eintraege, zv.startIso, zv.endeIso);
+  var total = summeCent(akt);
+  var totalVor = summeCent(vor);
+  var summen = gruppenSummen(akt);
+  var saetze = auffaelligkeiten(akt, vor);
+
+  var html = '';
+
+  html += '<div class="karte">' + zeitWahlHtml(z) + '</div>';
+
+  /* Monats-Bilanz: Einnahmen, Feste Kosten, Einkäufe, Rest */
+  if (ST.einkommen > 0 || ST.fixe.length) {
+    html += bilanzKarteHtml();
+  } else {
+    html += '<div class="karte">' +
+      '<h2 class="karte-titel-klein">Einnahmen gegen Ausgaben</h2>' +
+      '<p class="erklaerung">Hier kann stehen, was im Monat übrig bleibt. Dafür zwei Dinge eintragen: wie viel Geld du im Monat hast, und deine festen Kosten (Miete, Strom, Kredit, Raten).</p>' +
+      '<button class="knopf knopf-leise" style="width:100%" onclick="zeigeTab(\'tipps\')">Einnahmen eintragen</button>' +
+      '<button class="knopf knopf-leise" style="width:100%" onclick="zeigeTab(\'fixe\')">Feste Kosten eintragen</button>' +
+      '</div>';
+  }
+
+  if (!akt.length) {
+    html += '<div class="karte leer-karte">' +
+      '<div class="gross">🧾</div>' +
+      '<h2 class="karte-titel">Hier steht noch nichts</h2>' +
+      '<p class="erklaerung">Für diesen Zeitraum sind keine Ausgaben eingetragen. Trage deinen nächsten Einkauf ein, dann füllt sich diese Seite von selbst.</p>' +
+      '<button class="knopf knopf-primaer" style="max-width:280px" onclick="zeigeTab(\'eintraege\')">Einkauf eintragen</button>' +
+      '</div>';
+  } else {
+    html += '<div class="karte karte-hero">' +
+      '<p class="neben">Ausgaben in diesem Zeitraum (' + akt.length + ' Einkäufe)</p>' +
+      '<p class="zahl">' + euroAusCent(total) + '</p>' +
+      (z.tage > 1 ? '<p class="neben">Pro Tag sind das ' + euroAusCent(Math.round(total / z.tage)) + '.</p>' : '') +
+      '<div class="vergleich-zeile">📊 ' + esc(vergleichText(total, totalVor, z.nameDavor)) + '</div>' +
+      '</div>';
+
+    var balken = summen.map(function (s) {
+      var g = gruppeById(s.id);
+      var prozent = anteil(s.cent, total);
+      return '<div class="balken-zeile">' +
+        '<div class="balken-kopf"><span class="links"><span>' + g.icon + '</span><span>' + esc(g.name) + '</span></span>' +
+        '<span class="rechts">' + euroAusCent(s.cent) + '</span></div>' +
+        '<div class="balken-spur"><div class="balken-fill" style="width:' + Math.max(prozent, 1) + '%;background:' + g.farbe + '"></div></div>' +
+        '<div class="balken-prozent">' + prozent + ' % · ' + s.zahl + ' Einkäufe</div>' +
+        '</div>';
+    }).join('');
+
+    html += '<div class="grid-2"><div class="karte">' +
+      '<h2 class="karte-titel-klein">Verteilung auf Warengruppen</h2>' +
+      balken +
+      '<p class="erklaerung">Warengruppe = die Sorte der Ausgabe, zum Beispiel alles vom Supermarkt.</p>' +
+      '</div>';
+
+    html += '<div class="karte">' +
+      '<h2 class="karte-titel-klein">Auffälligkeiten</h2>' +
+      '<ul style="list-style:none">' + saetze.map(function (s) {
+        return '<li style="display:flex;gap:8px;padding:7px 0;font-size:14px;line-height:1.5"><span>💡</span><span>' + esc(s) + '</span></li>';
+      }).join('') + '</ul>' +
+      '<button class="knopf knopf-leise" style="width:100%" onclick="zeigeTab(\'tipps\')">Tipps zum Sparen ansehen</button>' +
+      '</div></div>';
+  }
+  ziel.innerHTML = html;
+}
+
+/* ---------- Einträge ---------- */
+function renderListe() {
+  var ziel = document.getElementById('eintrag-liste');
+  if (!ST.eintraege.length) {
+    ziel.innerHTML = '<div class="karte leer-karte">' +
+      '<div class="gross">📭</div>' +
+      '<h2 class="karte-titel">Noch keine Einträge</h2>' +
+      '<p class="erklaerung">Trage oben deinen ersten Einkauf ein. Oder lade im Tab „Prüfung" Beispiel-Einkäufe, um die App erst einmal auszuprobieren.</p>' +
+      '</div>';
+    return;
+  }
+  var nachDatum = {};
+  ST.eintraege.forEach(function (e) {
+    (nachDatum[e.datum] = nachDatum[e.datum] || []).push(e);
+  });
+  var tage = Object.keys(nachDatum).sort(function (a, b) { return a < b ? 1 : -1; });
+  var html = '';
+  tage.forEach(function (tag) {
+    var summeTag = summeCent(nachDatum[tag]);
+    html += '<p class="tag-kopf">' + esc(fmtDatumLang(tag)) + ' · ' + euroAusCent(summeTag) + '</p>';
+    nachDatum[tag].slice().sort(function (a, b) { return b.cent - a.cent; }).forEach(function (e) {
+      var g = gruppeById(e.gruppe);
+      html += '<div class="eintrag">' +
+        '<div class="icon">' + g.icon + '</div>' +
+        '<div class="mitte"><div class="laden">' + esc(e.laden) + '</div><div class="gruppe">' + esc(g.name) +
+        (e.fix ? ' · 📌 feste Kosten' : '') +
+        (e.positionen && e.positionen.length ? ' · <button class="foto-link" onclick="posZeigen(\'' + e.id + '\')">📄 ' + e.positionen.length + ' Positionen ansehen</button>' : '') +
+        (e.foto ? ' · <button class="foto-link" onclick="fotoZeigen(\'' + e.id + '\')">📷 Quittung ansehen</button>' : '') +
+        '</div></div>' +
+        '<div class="betrag">' + euroAusCent(e.cent) + '</div>' +
+        '<div class="akt">' +
+        '<button class="rund-knopf" title="Eintrag ändern" onclick="eintragBearbeiten(\'' + e.id + '\')">✏️</button>' +
+        '<button class="rund-knopf gefahr" title="Eintrag löschen" onclick="eintragLoeschen(\'' + e.id + '\')">🗑️</button>' +
+        '</div></div>';
+    });
+  });
+  ziel.innerHTML = html;
+}
+
+function ladenGeaendert() {
+  try {
+    var feld = document.getElementById('eingabe-laden');
+    var hinweis = document.getElementById('vorschlags-hinweis');
+    var vorschlag = gruppeVorschlag(feld.value);
+    if (vorschlag) {
+      document.getElementById('eingabe-gruppe').value = vorschlag.id;
+      hinweis.textContent = 'Vorschlag: ' + vorschlag.icon + ' ' + vorschlag.name + '. Ich habe die Warengruppe schon für dich ausgewählt. Du kannst sie ändern.';
+    } else if (feld.value.trim()) {
+      hinweis.textContent = 'Diesen Laden kenne ich nicht. Wähle bitte selbst die Warengruppe.';
+    } else {
+      hinweis.textContent = '';
+    }
+  } catch (f) { zeigeFehler(f); }
+}
+
+function eintragAbschicken(ev) {
+  try {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var datum = document.getElementById('eingabe-datum').value;
+    var laden = (document.getElementById('eingabe-laden').value || '').trim() || 'Ohne Angabe';
+    var gruppe = document.getElementById('eingabe-gruppe').value || 'sonstiges';
+    var cent = centAusEuro(document.getElementById('eingabe-betrag').value);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datum)) { alert('Bitte wähle ein Datum.'); return false; }
+    if (cent === null) { alert('Bitte gib einen Betrag ein, zum Beispiel: 12,50'); return false; }
+    if (cent === 0) { alert('Der Betrag darf nicht 0 Euro sein.'); return false; }
+    var schonDa = ST.eintraege.some(function (e) {
+      return e.id !== ST.bearbeitetId && e.datum === datum && e.cent === cent && String(e.laden).toLowerCase() === laden.toLowerCase();
+    });
+    if (schonDa) {
+      if (!confirm('Achtung: Es gibt schon einen Eintrag mit gleichem Laden, gleichem Datum und gleichem Betrag. Soll er trotzdem noch einmal hinzugefügt werden?')) {
+        return false;
+      }
+    }
+    var ziel;
+    if (ST.bearbeitetId) {
+      ziel = ST.eintraege.filter(function (x) { return x.id === ST.bearbeitetId; })[0];
+      if (ziel) { ziel.datum = datum; ziel.laden = laden; ziel.gruppe = gruppe; ziel.cent = cent; ziel.foto = ST.neuesFoto || null; }
+      bearbeitungAbbrechen(true);
+      toast('Änderung gespeichert ✓');
+    } else {
+      ziel = { id: 'e' + Date.now() + '_' + (zaehler++), datum: datum, laden: laden, gruppe: gruppe, cent: cent, foto: ST.neuesFoto || null };
+      ST.eintraege.push(ziel);
+      toast('Eintrag gespeichert ✓');
+    }
+    if (!speichern(SPEICHER_EINTRAEGE, ST.eintraege)) {
+      /* Speicher voll: Meist sind es die Fotos. Noch einmal ohne das neue Foto versuchen. */
+      if (ziel) ziel.foto = null;
+      if (speichern(SPEICHER_EINTRAEGE, ST.eintraege)) {
+        toast('Gespeichert, aber ohne Foto: Der Speicher deines Browsers ist voll.');
+      } else {
+        alert('Der Speicher des Browsers ist voll. Lösche alte Einträge, oder sichere die Daten im Tab "Prüfung" und räume auf.');
+      }
+    }
+    formularLeeren();
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+  return false;
+}
+
+/* ---------- Quittung-Foto ---------- */
+function fotoGewaehlt(ev) {
+  try {
+    var datei = ev && ev.target && ev.target.files && ev.target.files[0];
+    if (!datei) { return; }
+    if (typeof FileReader === 'undefined' || typeof Image === 'undefined') {
+      alert('Fotos gehen in diesem Browser leider nicht. Du kannst den Eintrag auch ohne Foto speichern.');
+      return;
+    }
+    var leser = new FileReader();
+    leser.onload = function () {
+      bildKleinMachen(leser.result, function (klein) {
+        if (!klein) { alert('Das Bild konnte nicht verkleinert werden. Vielleicht ist es zu groß.'); return; }
+        ST.neuesFoto = klein;
+        fotoVorschauZeigen(klein);
+        toast('Foto angehängt. Es wird mit dem Eintrag gespeichert.');
+      });
+    };
+    leser.onerror = function () { alert('Das Foto konnte nicht gelesen werden.'); };
+    leser.readAsDataURL(datei);
+  } catch (f) { zeigeFehler(f); }
+}
+
+function bildKleinMachen(dataUrl, fertig) {
+  try {
+    var img = new Image();
+    img.onload = function () {
+      var maxKante = 800;
+      var breite = img.width, hoehe = img.height;
+      if (Math.max(breite, hoehe) > maxKante) {
+        var faktor = maxKante / Math.max(breite, hoehe);
+        breite = Math.max(1, Math.round(breite * faktor));
+        hoehe = Math.max(1, Math.round(hoehe * faktor));
+      }
+      var c = document.createElement('canvas');
+      c.width = breite; c.height = hoehe;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, breite, hoehe);
+      fertig(c.toDataURL('image/jpeg', 0.62));
+    };
+    img.onerror = function () { fertig(null); };
+    img.src = dataUrl;
+  } catch (e) { fertig(null); }
+}
+
+function fotoVorschauZeigen(klein) {
+  var feld = document.getElementById('foto-vorschau');
+  feld.innerHTML = '<img alt="Foto der Quittung" src="' + klein + '">' +
+    '<span class="text">Foto angehängt. Es bleibt bei diesem Eintrag.</span>' +
+    '<button type="button" class="mini-knopf" onclick="fotoEntfernen()">Entfernen</button>';
+  feld.classList.remove('versteckt');
+}
+
+function fotoVorschauAusblenden() {
+  try {
+    var feld = document.getElementById('foto-vorschau');
+    feld.classList.add('versteckt');
+    feld.innerHTML = '';
+    var wahl = document.getElementById('quittung-eingabe');
+    if (wahl) wahl.value = '';
+  } catch (f) { zeigeFehler(f); }
+}
+
+function fotoEntfernen() {
+  ST.neuesFoto = null;
+  fotoVorschauAusblenden();
+}
+
+function fotoZeigen(id) {
+  try {
+    var e = ST.eintraege.filter(function (x) { return x.id === id; })[0];
+    if (!e || !e.foto) { alert('Zu diesem Eintrag gibt es kein Foto.'); return; }
+    document.getElementById('foto-modal-bild').src = e.foto;
+    document.getElementById('foto-modal').classList.add('offen');
+  } catch (f) { zeigeFehler(f); }
+}
+
+function fotoSchliessen() {
+  try { document.getElementById('foto-modal').classList.remove('offen'); } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Schnell-Erfassung ---------- */
+function schnellHinzufuegen() {
+  try {
+    var text = document.getElementById('schnell-feld').value;
+    var ergebnisFeld = document.getElementById('schnell-ergebnis');
+    var erg = schnellZeilenParse(text, heuteIso());
+    if (!erg.ok.length && !erg.fehler.length) {
+      ergebnisFeld.textContent = 'Bitte schreibe erst Zeilen hinein. Pro Zeile ein Einkauf.';
+      return;
+    }
+    if (erg.ok.length && erg.fehler.length) {
+      if (!confirm(erg.fehler.length + ' Zeile(n) haben Fehler und werden übersprungen. Die guten ' + erg.ok.length + ' Zeile(n) hinzufügen?')) {
+        return;
+      }
+    }
+    var start = ST.eintraege.length;
+    erg.ok.forEach(function (e, i) {
+      ST.eintraege.push({ id: 's' + Date.now() + '_' + (start + i), datum: e.datum, laden: e.laden, gruppe: e.gruppe, cent: e.cent });
+    });
+    var gespeichert = speichern(SPEICHER_EINTRAEGE, ST.eintraege);
+    var meldung = '';
+    if (erg.ok.length) {
+      meldung += erg.ok.length + ' Eintrag/Einträge hinzugefügt ✓';
+      document.getElementById('schnell-feld').value = '';
+      toast(erg.ok.length + ' Einträge hinzugefügt ✓');
+    }
+    var ohneHinweis = erg.ok.filter(function (e) { return e.ohneHinweis; }).length;
+    if (ohneHinweis) {
+      meldung += '<br>Für ' + ohneHinweis + ' Einkauf/Einkäufe gab es keinen Laden-Hinweis. Sie liegen bei „Sonstiges". Du kannst sie dort ändern.';
+    }
+    if (erg.fehler.length) {
+      meldung += '<br>' + erg.fehler.map(function (f) { return esc(f); }).join('<br>');
+    }
+    if (!gespeichert) {
+      meldung += '<br>Achtung: Der Speicher des Browsers ist voll. Die Einträge sind angezeigt, aber vielleicht nicht dauerhaft gesichert.';
+    }
+    ergebnisFeld.innerHTML = meldung;
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+function formularLeeren() {
+  document.getElementById('eingabe-laden').value = '';
+  document.getElementById('eingabe-betrag').value = '';
+  document.getElementById('vorschlags-hinweis').textContent = '';
+  document.getElementById('eingabe-datum').value = heuteIso();
+  ST.neuesFoto = null;
+  fotoVorschauAusblenden();
+}
+
+function eintragBearbeiten(id) {
+  try {
+    var e = ST.eintraege.filter(function (x) { return x.id === id; })[0];
+    if (!e) return;
+    ST.bearbeitetId = id;
+    document.getElementById('eingabe-datum').value = e.datum;
+    document.getElementById('eingabe-laden').value = e.laden;
+    document.getElementById('eingabe-gruppe').value = e.gruppe;
+    document.getElementById('eingabe-betrag').value = euroAusCent(e.cent).replace(' €', '');
+    ST.neuesFoto = e.foto || null;
+    if (ST.neuesFoto) fotoVorschauZeigen(ST.neuesFoto); else fotoVorschauAusblenden();
+    document.getElementById('eintragen-knopf').textContent = 'Änderung speichern';
+    document.getElementById('abbruch-knopf').classList.remove('versteckt');
+    if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
+  } catch (f) { zeigeFehler(f); }
+}
+
+function bearbeitungAbbrechen(ohneMeldung) {
+  try {
+    ST.bearbeitetId = null;
+    ST.neuesFoto = null;
+    document.getElementById('eintragen-knopf').textContent = 'Eintrag hinzufügen';
+    document.getElementById('abbruch-knopf').classList.add('versteckt');
+    fotoVorschauAusblenden();
+    if (!ohneMeldung) formularLeeren();
+  } catch (f) { zeigeFehler(f); }
+}
+
+function eintragLoeschen(id) {
+  try {
+    if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+    ST.eintraege = ST.eintraege.filter(function (x) { return x.id !== id; });
+    if (ST.bearbeitetId === id) bearbeitungAbbrechen(true);
+    speichern(SPEICHER_EINTRAEGE, ST.eintraege);
+    toast('Eintrag gelöscht');
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Gruppen ---------- */
+function renderGruppen() {
+  var ziel = document.getElementById('inhalt-gruppen');
+  var z = zeitraumFuer(ST.art, ST.anker);
+  var akt = eintraegeIm(ST.eintraege, z.startIso, z.endeIso);
+  var total = summeCent(akt);
+  var summen = gruppenSummen(akt);
+  var html = '';
+  if (!akt.length) {
+    html = '<div class="karte leer-karte">' +
+      '<div class="gross">🗂️</div>' +
+      '<h2 class="karte-titel">Keine Ausgaben in diesem Zeitraum</h2>' +
+      '<p class="erklaerung">Hier siehst du später, wie viel in jede Warengruppe geht. Trage zuerst Einkäufe ein.</p>' +
+      '<button class="knopf knopf-primaer" style="max-width:280px" onclick="zeigeTab(\'eintraege\')">Einkauf eintragen</button>' +
+      '</div>';
+    ziel.innerHTML = html;
+    return;
+  }
+  html += '<div class="karte">' + zeitWahlHtml(z) + '</div>';
+  html += '<div class="karte"><div class="stat-reihe">' +
+    '<div class="stat-kasten"><div class="zahl">' + euroAusCent(total) + '</div><div class="text">Ausgaben im Zeitraum</div></div>' +
+    '<div class="stat-kasten"><div class="zahl">' + akt.length + '</div><div class="text">Einkäufe</div></div>' +
+    '<div class="stat-kasten"><div class="zahl">' + euroAusCent(Math.round(total / akt.length)) + '</div><div class="text">Ø je Einkauf</div></div>' +
+    '</div><p class="erklaerung">Ø heißt: im Durchschnitt. Das ist die Summe geteilt durch die Zahl der Einkäufe.</p></div>';
+
+  var karten = summen.map(function (s) {
+    var g = gruppeById(s.id);
+    var prozent = anteil(s.cent, total);
+    return '<div class="gruppe-karte">' +
+      '<div class="gruppe-kopf"><div class="icon">' + g.icon + '</div>' +
+      '<div class="name">' + esc(g.name) + '</div>' +
+      '<div class="rest"><span class="summe">' + euroAusCent(s.cent) + '</span></div></div>' +
+      '<div class="balken-spur" style="margin-top:10px"><div class="balken-fill" style="width:' + Math.max(prozent, 1) + '%;background:' + g.farbe + '"></div></div>' +
+      '<div class="balken-prozent">' + prozent + ' % · ' + s.zahl + ' Einkäufe · Ø ' + euroAusCent(Math.round(s.cent / s.zahl)) + ' je Einkauf</div>' +
+      '</div>';
+  }).join('');
+  html += karten;
+  ziel.innerHTML = html;
+}
+
+/* ---------- Fixkosten (feste Kosten) ---------- */
+function renderFixe() {
+  var ziel = document.getElementById('inhalt-fixe');
+  var soll = fixeSollMonat(ST.fixe);
+  var html = '';
+  html += '<div class="karte">' +
+    '<h2 class="karte-titel">Feste Kosten</h2>' +
+    '<p class="erklaerung">Feste Kosten = Zahlungen, die immer wieder kommen: Miete, Strom, Gas, Wasser, Kredit, Darlehen, Raten, Versicherungen und alles andere, was regelmäßig vom Konto geht. Sie sind eigene Untergruppen und gehören zu ihrem Bereich, zum Beispiel Strom zum Bereich Wohnen.</p>';
+  if (ST.fixe.length) {
+    html += '<div class="stat-reihe" style="margin-top:12px">' +
+      '<div class="stat-kasten"><div class="zahl">' + euroAusCent(soll) + '</div><div class="text">pro Monat (gerechnet)</div></div>' +
+      '<div class="stat-kasten"><div class="zahl">' + ST.fixe.length + '</div><div class="text">feste Kosten</div></div>' +
+      '</div>' +
+      '<p class="erklaerung">Vierteljährliche und jährliche Zahlungen sind hier auf den Monat umgerechnet. Ø heißt: im Schnitt.</p>';
+  } else {
+    html += '<p class="erklaerung">Noch keine festen Kosten eingetragen. Beispiele: Autokredit, Strom, Streaming-Abo, Haftpflicht-Versicherung.</p>';
+  }
+  html += '</div>';
+  ziel.innerHTML = html;
+  renderFixListe();
+}
+
+function renderFixListe() {
+  var ziel = document.getElementById('fix-liste');
+  if (!ST.fixe.length) { ziel.innerHTML = ''; return; }
+  var heute = heuteIso();
+  var html = '';
+  GRUPPEN.forEach(function (g) {
+    var eigene = ST.fixe.filter(function (f) { return fixGruppe(f) === g.id; });
+    if (!eigene.length) return;
+    html += '<p class="tag-kopf">' + g.icon + ' ' + esc(g.name) + ' (Bereich)</p>';
+    eigene.forEach(function (f) {
+      var k = f.kategorie === 'eigene'
+        ? { icon: '✏️', name: f.eigName || 'Eigene Kategorie' }
+        : fixKategorieById(f.kategorie);
+      var schon = fixSchonImMonat(ST.eintraege, f.id, heute);
+      html += '<div class="eintrag">' +
+        '<div class="icon">' + k.icon + '</div>' +
+        '<div class="mitte"><div class="laden">' + esc(fixName(f)) + '</div>' +
+        '<div class="gruppe">' + esc(k.name) + ' · ' + esc(rythmusName(f.rythmus)) + ' · Ø ' + euroAusCent(fixMonatsCent(f)) + ' im Monat</div></div>' +
+        '<div class="betrag">' + euroAusCent(f.cent) + '</div>' +
+        '<div class="akt">' +
+        '<button class="rund-knopf" ' + (schon ? 'disabled title="Für diesen Monat schon übernommen"' : 'title="Diesen Monat als Ausgabe übernehmen"') + ' onclick="fixUebernehmen(\'' + f.id + '\')">' + (schon ? '✓' : '📌') + '</button>' +
+        '<button class="rund-knopf" title="Ändern" onclick="fixBearbeiten(\'' + f.id + '\')">✏️</button>' +
+        '<button class="rund-knopf gefahr" title="Löschen" onclick="fixLoeschen(\'' + f.id + '\')">🗑️</button>' +
+        '</div></div>';
+    });
+  });
+  ziel.innerHTML = html;
+}
+
+function fixKategorieGeaendert() {
+  try {
+    var kat = document.getElementById('fix-kategorie').value;
+    document.getElementById('fix-eigene').classList.toggle('versteckt', kat !== 'eigene');
+  } catch (f) { zeigeFehler(f); }
+}
+
+function fixAbschicken(ev) {
+  try {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var kat = document.getElementById('fix-kategorie').value || 'eigene';
+    var eigName = (document.getElementById('fix-eigene-name').value || '').trim();
+    var eigGruppe = document.getElementById('fix-eigene-gruppe').value || 'sonstiges';
+    var name = (document.getElementById('fix-name').value || '').trim();
+    if (!name) name = kat === 'eigene' ? (eigName || 'Eigene Kategorie') : fixKategorieById(kat).name;
+    var cent = centAusEuro(document.getElementById('fix-betrag').value);
+    var rythmus = document.getElementById('fix-rythmus').value || 'monat';
+    if (['monat', 'quartal', 'jahr'].indexOf(rythmus) < 0) rythmus = 'monat';
+    if (cent === null) { alert('Bitte gib einen Betrag ein, zum Beispiel: 220'); return false; }
+    if (cent === 0) { alert('Der Betrag darf nicht 0 Euro sein.'); return false; }
+    var daten = {
+      name: name.slice(0, 60),
+      kategorie: fixKategorieGueltig(kat) ? kat : 'eigene',
+      eigName: eigName.slice(0, 60),
+      eigGruppe: kat === 'eigene' ? gruppeById(eigGruppe).id : 'sonstiges',
+      cent: cent,
+      rythmus: rythmus
+    };
+    if (ST.fixBearbeitetId) {
+      var ziel = ST.fixe.filter(function (x) { return x.id === ST.fixBearbeitetId; })[0];
+      if (ziel) Object.assign(ziel, daten);
+      ST.fixBearbeitetId = null;
+      toast('Änderung gespeichert ✓');
+    } else {
+      daten.id = 'f' + Date.now() + '_' + (zaehler++);
+      ST.fixe.push(daten);
+      toast('Feste Kosten hinzugefügt ✓');
+    }
+    if (!speichern(SPEICHER_FIXE, ST.fixe)) {
+      alert('Der Speicher des Browsers ist voll. Die Änderung ist gerade nicht dauerhaft gesichert.');
+    }
+    fixFormLeeren();
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+  return false;
+}
+
+function fixFormLeeren() {
+  document.getElementById('fix-name').value = '';
+  document.getElementById('fix-eigene-name').value = '';
+  document.getElementById('fix-eigene-gruppe').value = 'sonstiges';
+  document.getElementById('fix-betrag').value = '';
+  document.getElementById('fix-rythmus').value = 'monat';
+  var kat = document.getElementById('fix-kategorie');
+  kat.value = FIX_KATEGORIEN[0].id;
+  document.getElementById('fix-eigene').classList.add('versteckt');
+  document.getElementById('fix-knopf').textContent = 'Feste Kosten hinzufügen';
+  document.getElementById('fix-abbruch').classList.add('versteckt');
+}
+
+function fixBearbeiten(id) {
+  try {
+    var f = ST.fixe.filter(function (x) { return x.id === id; })[0];
+    if (!f) return;
+    ST.fixBearbeitetId = id;
+    document.getElementById('fix-kategorie').value = f.kategorie;
+    fixKategorieGeaendert();
+    document.getElementById('fix-eigene-name').value = f.eigName || '';
+    document.getElementById('fix-eigene-gruppe').value = f.eigGruppe || 'sonstiges';
+    document.getElementById('fix-name').value = fixName(f);
+    document.getElementById('fix-betrag').value = euroAusCent(f.cent).replace(' €', '');
+    document.getElementById('fix-rythmus').value = f.rythmus;
+    document.getElementById('fix-knopf').textContent = 'Änderung speichern';
+    document.getElementById('fix-abbruch').classList.remove('versteckt');
+    if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
+  } catch (f) { zeigeFehler(f); }
+}
+
+function fixAbbrechen() {
+  try { ST.fixBearbeitetId = null; fixFormLeeren(); renderAlles(); } catch (f) { zeigeFehler(f); }
+}
+
+function fixLoeschen(id) {
+  try {
+    if (!confirm('Diese feste Kosten wirklich löschen? Bereits übernommene Einträge bleiben, verlieren aber ihre Markierung.')) return;
+    ST.fixe = ST.fixe.filter(function (x) { return x.id !== id; });
+    ST.eintraege.forEach(function (e) { if (e.fix === id) e.fix = null; });
+    if (ST.fixBearbeitetId === id) { ST.fixBearbeitetId = null; fixFormLeeren(); }
+    speichern(SPEICHER_FIXE, ST.fixe);
+    speichern(SPEICHER_EINTRAEGE, ST.eintraege);
+    toast('Gelöscht');
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+function fixUebernehmen(id) {
+  try {
+    var f = ST.fixe.filter(function (x) { return x.id === id; })[0];
+    if (!f) return;
+    if (fixSchonImMonat(ST.eintraege, id, heuteIso())) {
+      toast('Für diesen Monat schon übernommen.');
+      return;
+    }
+    ST.eintraege.push({ id: 'e' + Date.now() + '_' + (zaehler++), datum: heuteIso(), laden: fixName(f), gruppe: fixGruppe(f), cent: f.cent, fix: id });
+    if (!speichern(SPEICHER_EINTRAEGE, ST.eintraege)) {
+      toast('Der Speicher ist voll. Der Eintrag ist angezeigt, aber vielleicht nicht dauerhaft gesichert.');
+    } else {
+      toast('Als Ausgabe übernommen ✓ Er zählt in der Monats-Rechnung bei den festen Kosten mit.');
+    }
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Beleg-Import: komplette Quittung aus dem Chat ---------- */
+function belegEinfuegen() {
+  try {
+    var text = document.getElementById('beleg-feld').value;
+    var ergebnisFeld = document.getElementById('beleg-ergebnis');
+    var erg = belegParse(text, heuteIso());
+    if (!erg.beleg) {
+      ergebnisFeld.innerHTML = erg.fehler.map(function (f) { return esc(f); }).join('<br>') || 'Bitte füge zuerst einen Beleg-Block ein.';
+      return;
+    }
+    if (erg.diff !== 0) {
+      if (!confirm('Die Positionen ergeben ' + euroAusCent(erg.summePos) + '. Auf der Quittung steht ' + euroAusCent(erg.beleg.cent) + '. Die Differenz (' + euroAusCent(erg.diff) + ') lege ich als eigene Position "Differenz" an, damit die Rechnung aufgeht. Übernehmen?')) {
+        ergebnisFeld.textContent = 'Nicht übernommen. Du kannst den Block ändern und es erneut versuchen.';
+        return;
+      }
+      erg.beleg.positionen.push({ name: 'Differenz (automatisch)', cent: erg.diff, gruppe: 'sonstiges' });
+    }
+    var b = erg.beleg;
+    var schonDa = ST.eintraege.some(function (e) {
+      return e.datum === b.datum && e.cent === b.cent && String(e.laden).toLowerCase() === b.laden.toLowerCase();
+    });
+    if (schonDa && !confirm('Es gibt schon einen Eintrag mit gleichem Laden, Datum und Betrag. Trotzdem noch einmal hinzufügen?')) {
+      ergebnisFeld.textContent = 'Nicht übernommen: Der Beleg scheint schon eingetragen zu sein.';
+      return;
+    }
+    ST.eintraege.push({ id: 'e' + Date.now() + '_' + (zaehler++), datum: b.datum, laden: b.laden, gruppe: b.gruppe, cent: b.cent, positionen: b.positionen });
+    if (!speichern(SPEICHER_EINTRAEGE, ST.eintraege)) {
+      alert('Der Speicher des Browsers ist voll. Der Beleg ist angezeigt, aber vielleicht nicht dauerhaft gesichert.');
+    }
+    document.getElementById('beleg-feld').value = '';
+    ergebnisFeld.textContent = 'Quittung übernommen ✓ ' + b.positionen.length + ' Positionen, ' + euroAusCent(b.cent) + ' bei ' + b.laden + '.';
+    toast('Quittung übernommen ✓');
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+function posZeigen(id) {
+  try {
+    var e = ST.eintraege.filter(function (x) { return x.id === id; })[0];
+    if (!e || !e.positionen || !e.positionen.length) { alert('Zu diesem Eintrag gibt es keine Positionen.'); return; }
+    var summe = e.positionen.reduce(function (s, p) { return s + p.cent; }, 0);
+    var zeilen = e.positionen.map(function (p) {
+      var g = gruppeById(p.gruppe);
+      return '<div class="pos-zeile"><div class="icon">' + g.icon + '</div>' +
+        '<div class="links"><div class="name">' + esc(p.name) + '</div><div class="gruppe">' + esc(g.name) + '</div></div>' +
+        '<div class="betrag">' + euroAusCent(p.cent) + '</div></div>';
+    }).join('');
+    var kasten = document.getElementById('pos-kasten');
+    kasten.innerHTML = '<h3>' + esc(e.laden) + '</h3><p class="unter">' + esc(fmtDatumLang(e.datum)) + ' · ' + e.positionen.length + ' Positionen</p>' +
+      zeilen +
+      '<p class="erklaerung" style="margin-top:10px">Positionen zusammen: ' + euroAusCent(summe) + ' · Kassen-Summe: ' + euroAusCent(e.cent) +
+      (summe === e.cent ? ' ✓' : ' ⚠️ passt nicht') + '</p>';
+    document.getElementById('pos-modal').classList.add('offen');
+  } catch (f) { zeigeFehler(f); }
+}
+
+function posSchliessen() {
+  try { document.getElementById('pos-modal').classList.remove('offen'); } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Prüfung ---------- */
+function renderPruefung() {
+  var ziel = document.getElementById('inhalt-pruefung');
+  var heute = heuteIso();
+  var befunde = pruefListe(ST.eintraege, heute);
+  var total = summeCent(ST.eintraege);
+
+  var pruefHtml = '<div class="karte">' +
+    '<h2 class="karte-titel">Prüfung deiner Einträge</h2>' +
+    '<p class="erklaerung">Die App schaut automatisch nach doppelten Einträgen, seltsamen Daten und sehr großen Beträgen.</p>' +
+    befunde.map(function (b) {
+      return '<div class="pruef-zeile"><span class="icon">' + b.icon + '</span><p>' + esc(b.text) + '</p></div>';
+    }).join('') +
+    '</div>';
+
+  var probeHtml = '<div class="karte">' +
+    '<h2 class="karte-titel">Rechen-Probe</h2>' +
+    '<p style="font-size:14px;line-height:1.6">Wir haben alle Beträge noch einmal zusammengezählt:<br>' +
+    '<b>' + ST.eintraege.length + ' Einträge</b>, insgesamt <b>' + euroAusCent(total) + '</b>.</p>' +
+    '<p class="erklaerung">Diese Probe rechnet die gespeicherten Beträge immer neu nach. Was hier steht, ist sicher.</p>' +
+    '</div>';
+
+  var datenHtml = '<div class="karte">' +
+    '<h2 class="karte-titel">Datensicherung</h2>' +
+    '<p class="erklaerung">Deine Daten liegen im Speicher dieses Browsers. Wenn du sie behalten willst (zum Beispiel für ein neues Handy), sichere sie als Datei. Die Datei ist im JSON-Format. Das ist ein Text-Format, in dem Daten gut aufgehoben sind. Auch die Fotos der Quittungen sind drin. Dadurch kann die Datei größer werden.</p>' +
+    '<button class="knopf knopf-leise" style="width:100%" onclick="exportJson()">Daten als Datei sichern</button>' +
+    '<label for="export-feld" style="margin-top:14px">Zur Sicherheit kannst du den Text auch hier kopieren und irgendwo speichern:</label>' +
+    '<textarea id="export-feld" readonly></textarea>' +
+    '<label for="import-feld" style="margin-top:14px">Daten zurückholen: Füge hier den gesicherten Text ein.</label>' +
+    '<textarea id="import-feld" placeholder="Hier den gesicherten Text einfügen"></textarea>' +
+    '<button class="knopf knopf-leise" style="width:100%" onclick="importJson()">Eingefügte Daten laden</button>' +
+    '</div>';
+
+  var beispielHtml = '<div class="karte">' +
+    '<h2 class="karte-titel">Erst einmal ausprobieren?</h2>' +
+    '<p class="erklaerung">Du kannst Beispiel-Einkäufe laden. Damit siehst du sofort, wie alles aussieht. Du kannst sie später wieder löschen.</p>' +
+    '<button class="knopf knopf-leise" style="width:100%" onclick="beispielLaden()">Beispiel-Einkäufe laden</button>' +
+    '</div>';
+
+  var gefahrHtml = '<div class="karte">' +
+    '<h2 class="karte-titel">Alles löschen</h2>' +
+    '<p class="erklaerung">Das entfernt alle Einträge endgültig. Sichere sie vorher, wenn du sie brauchst.</p>' +
+    '<button class="knopf knopf-gefahr" style="width:100%" onclick="allesLoeschen()">Alle Einträge löschen</button>' +
+    '</div>';
+
+  ziel.innerHTML = pruefHtml + probeHtml + datenHtml + beispielHtml + gefahrHtml;
+  try { document.getElementById('export-feld').value = JSON.stringify(exportObjekt(), null, 2); } catch (e) {}
+}
+
+function exportObjekt() {
+  return { app: 'haushaltsbuch', version: 1, einkommen: ST.einkommen, eintraege: ST.eintraege, fixe: ST.fixe, exportiert: heuteIso() };
+}
+
+function exportJson() {
+  try {
+    var text = JSON.stringify(exportObjekt(), null, 2);
+    document.getElementById('export-feld').value = text;
+    var gemacht = false;
+    if (typeof Blob !== 'undefined' && typeof URL !== 'undefined' && URL.createObjectURL) {
+      var blob = new Blob([text], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'haushaltsbuch-sicherung.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      gemacht = true;
+    }
+    toast(gemacht ? 'Datei erstellt. Wenn kein Download kam, kopiere den Text aus dem Feld.' : 'Daten stehen im Feld unten. Kopiere und bewahre sie auf.');
+  } catch (f) { zeigeFehler(f); }
+}
+
+function importJson() {
+  try {
+    var text = document.getElementById('import-feld').value;
+    if (!text.trim()) { alert('Bitte füge erst den gesicherten Text in das Feld ein.'); return; }
+    var obj = JSON.parse(text);
+    if (!obj || !Array.isArray(obj.eintraege)) { alert('Das sieht nicht nach einer Sicherung dieser App aus.'); return; }
+    var sauber = obj.eintraege.filter(function (e) {
+      return e && /^\d{4}-\d{2}-\d{2}$/.test(e.datum) && typeof e.cent === 'number' && e.cent >= 0;
+    }).map(function (e, i) {
+      return {
+        id: e.id || ('e' + i + '_' + Date.now()),
+        datum: e.datum,
+        laden: String(e.laden || 'Ohne Angabe').slice(0, 60),
+        gruppe: gruppeById(e.gruppe).id,
+        cent: Math.round(e.cent),
+        foto: (typeof e.foto === 'string' && e.foto.indexOf('data:image') === 0) ? e.foto : null,
+        positionen: (Array.isArray(e.positionen) && e.positionen.length) ? e.positionen.filter(function (p) {
+          return p && typeof p.cent === 'number';
+        }).map(function (p) {
+          return { name: String(p.name || 'Artikel').slice(0, 60), cent: Math.round(p.cent), gruppe: gruppeById(p.gruppe).id };
+        }) : null
+      };
+    });
+    var fixe = Array.isArray(obj.fixe) ? obj.fixe.filter(function (f) {
+      return f && typeof f.cent === 'number' && f.cent >= 0;
+    }).map(function (f, i) {
+      return {
+        id: f.id || ('f' + i + '_' + Date.now()),
+        name: String(f.name || 'Feste Kosten').slice(0, 60),
+        kategorie: fixKategorieGueltig(f.kategorie) ? f.kategorie : 'eigene',
+        eigName: typeof f.eigName === 'string' ? f.eigName.slice(0, 60) : '',
+        eigGruppe: gruppeById(f.eigGruppe).id,
+        cent: Math.round(f.cent),
+        rythmus: ['monat', 'quartal', 'jahr'].indexOf(f.rythmus) >= 0 ? f.rythmus : 'monat'
+      };
+    }) : [];
+    if (!confirm('Die Sicherung enthält ' + sauber.length + ' Einträge und ' + fixe.length + ' feste Kosten. Sie ersetzen deine jetzigen Daten. Weiter?')) return;
+    ST.eintraege = sauber;
+    ST.fixe = fixe;
+    if (typeof obj.einkommen === 'number' && obj.einkommen >= 0) ST.einkommen = Math.round(obj.einkommen);
+    speichern(SPEICHER_EINTRAEGE, ST.eintraege);
+    speichern(SPEICHER_FIXE, ST.fixe);
+    speichern(SPEICHER_EINKOMMEN, ST.einkommen);
+    document.getElementById('import-feld').value = '';
+    toast('Daten geladen ✓');
+    renderAlles();
+  } catch (f) {
+    alert('Der Text ließ sich nicht lesen. Prüfe, ob er vollständig kopiert wurde.');
+    zeigeFehler(f);
+  }
+}
+
+function beispielLaden() {
+  try {
+    if (ST.eintraege.length) {
+      if (!confirm('Es sind schon Einträge vorhanden. Die Beispiel-Einkäufe werden zusätzlich hinzugefügt. Weiter?')) return;
+    }
+    var neu = beispielEintraege().map(function (e, i) {
+      return { id: 'b' + Date.now() + '_' + i, datum: e.datum, laden: e.laden, gruppe: e.gruppe, cent: e.cent };
+    });
+    ST.eintraege = ST.eintraege.concat(neu);
+    speichern(SPEICHER_EINTRAEGE, ST.eintraege);
+    if (!ST.fixe.length) {
+      ST.fixe = [
+        { id: 'fb1_' + Date.now(), name: 'Beispiel: Autokredit', kategorie: 'kredit', eigName: '', eigGruppe: 'sonstiges', cent: 22000, rythmus: 'monat' },
+        { id: 'fb2_' + Date.now(), name: 'Beispiel: Haftpflicht-Versicherung', kategorie: 'versicherung', eigName: '', eigGruppe: 'sonstiges', cent: 12000, rythmus: 'jahr' },
+        { id: 'fb3_' + Date.now(), name: 'Beispiel: Streaming-Abo', kategorie: 'streaming', eigName: '', eigGruppe: 'freizeit', cent: 1500, rythmus: 'monat' }
+      ];
+      speichern(SPEICHER_FIXE, ST.fixe);
+      toast('Beispiel-Einkäufe geladen ✓ (inkl. 3 fester Kosten)');
+    } else {
+      toast('Beispiel-Einkäufe geladen ✓');
+    }
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+function allesLoeschen() {
+  try {
+    if (!ST.eintraege.length) { toast('Es gibt nichts zu löschen.'); return; }
+    if (!confirm('Wirklich ALLE Einträge löschen? Das lässt sich nicht zurückholen.')) return;
+    if (!confirm('Ganz sicher? Denk an die Datensicherung im Feld darüber.')) return;
+    ST.eintraege = [];
+    speichern(SPEICHER_EINTRAEGE, ST.eintraege);
+    toast('Alle Einträge gelöscht');
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Tipps ---------- */
+function renderTipps() {
+  var ziel = document.getElementById('inhalt-tipps');
+  var tipps = tippsBerechnen(ST.eintraege, ST.einkommen, heuteIso(), fixeSollMonat(ST.fixe));
+  var html = '';
+
+  if (ST.einkommen > 0 || ST.fixe.length) {
+    html += bilanzKarteHtml();
+  }
+
+  html += '<div class="karte">' +
+    '<h2 class="karte-titel">Wie viel Geld hast du im Monat?</h2>' +
+    '<p class="erklaerung">Alle Einkünfte zusammen, zum Beispiel Lohn, Rente oder Unterstützung. Damit kann die App zeigen, wie viel übrig bleibt.</p>' +
+    '<label for="einkommen-feld">Geld im Monat (in Euro)</label>' +
+    '<input id="einkommen-feld" inputmode="decimal" placeholder="zum Beispiel: 1800" value="' + (ST.einkommen ? euroAusCent(ST.einkommen).replace(' €', '') : '') + '">' +
+    '<button class="knopf knopf-primaer" onclick="einkommenSpeichern()">Betrag speichern</button>' +
+    '</div>';
+
+  html += '<h2 class="karte-titel" style="margin:6px 2px 10px">Deine Tipps</h2>';
+  tipps.forEach(function (t) {
+    html += '<div class="karte tipp-karte ' + (t.typ || 'info') + '">' +
+      '<div class="icon">' + t.icon + '</div>' +
+      '<div><h3>' + esc(t.titel) + '</h3><p>' + esc(t.text) + '</p></div>' +
+      '</div>';
+  });
+
+  html += '<h2 class="karte-titel" style="margin:18px 2px 10px">Immer gute Tipps</h2>';
+  var immer = [
+    { icon: '🛒', titel: 'Einkaufsliste schreiben', text: 'Wer mit einer Liste einkauft, kauft weniger spontan. Plan einmal pro Woche, plane die Mahlzeiten und kaufe alles in einem Gang.' },
+    { icon: '⏳', titel: 'Die 24-Stunden-Regel', text: 'Willst du etwas Teureres kaufen (ab etwa 30 Euro)? Warte einen Tag damit. Oft merkst du am nächsten Tag: Ich brauche es gar nicht.' },
+    { icon: '🐖', titel: 'Ein Notgroschen beruhigt', text: 'Leg Monat für Monat etwas zur Seite, bis du ungefähr zwei bis drei Monats-Ausgaben beisammen hast. Dann ist ein kaputtes Auto oder eine kaputte Waschmaschine kein Notfall mehr.' }
+  ];
+  immer.forEach(function (t) {
+    html += '<div class="karte tipp-karte gut"><div class="icon">' + t.icon + '</div>' +
+      '<div><h3>' + esc(t.titel) + '</h3><p>' + esc(t.text) + '</p></div></div>';
+  });
+
+  html += '<p class="erklaerung" style="text-align:center;margin-top:14px">Die Tipps sind allgemeine Hinweise in einfacher Sprache. Sie sind keine Beratung von Fachleuten.</p>';
+  ziel.innerHTML = html;
+}
+
+function einkommenSpeichern() {
+  try {
+    var text = document.getElementById('einkommen-feld').value;
+    if (text.trim() === '') {
+      ST.einkommen = 0;
+      speichern(SPEICHER_EINKOMMEN, 0);
+      toast('Betrag entfernt');
+    } else {
+      var cent = centAusEuro(text);
+      if (cent === null) { alert('Bitte gib eine Zahl ein, zum Beispiel: 1800'); return; }
+      ST.einkommen = cent;
+      speichern(SPEICHER_EINKOMMEN, cent);
+      toast('Gespeichert ✓');
+    }
+    renderAlles();
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Druck: je Zeitraum eine A4-Seite ---------- */
+function druckAufbauen() {
+  var ziel = document.getElementById('druck');
+  if (!ziel) return;
+  var seiten = ['tag', 'woche', 'quartal', 'jahr'].map(function (art) {
+    var z = zeitraumFuer(art, ST.anker);
+    var zv = zeitraumDavor(z);
+    var akt = eintraegeIm(ST.eintraege, z.startIso, z.endeIso);
+    var vor = eintraegeIm(ST.eintraege, zv.startIso, zv.endeIso);
+    var total = summeCent(akt);
+    var totalVor = summeCent(vor);
+    var summen = gruppenSummen(akt);
+    var saetze = auffaelligkeiten(akt, vor);
+
+    var zeilen = summen.map(function (s) {
+      var g = gruppeById(s.id);
+      return '<tr><td>' + g.icon + ' ' + esc(g.name) + '</td><td>' + euroAusCent(s.cent) + '</td><td>' + anteil(s.cent, total) + ' %</td><td>' + s.zahl + '</td></tr>';
+    }).join('');
+
+    return '<div class="druck-seite">' +
+      '<h2>Mein Haushaltsbuch · ' + esc(z.titel) + '</h2>' +
+      '<p class="druck-unter">Zusammenfassung · eine Seite</p>' +
+      (akt.length
+        ? '<p class="druck-gesamt">' + euroAusCent(total) + '</p>' +
+          '<p class="druck-vergleich">' + esc(vergleichText(total, totalVor, z.nameDavor)) + '</p>' +
+          (zeilen ? '<table class="druck-tabelle"><tr><th>Warengruppe</th><th>Summe</th><th>Anteil</th><th>Einkäufe</th></tr>' + zeilen + '</table>' : '')
+        : '<p class="druck-vergleich">In diesem Zeitraum sind keine Ausgaben eingetragen.</p>') +
+      (saetze.length ? '<ol class="druck-kernsaetze">' + saetze.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>' : '') +
+      '<p class="druck-fuss">Gedruckt am ' + fmtDatum(heuteIso()) + ' · ' + VERSION + '</p>' +
+      '</div>';
+  }).join('');
+  if (ST.fixe.length) {
+    var sollFix = fixeSollMonat(ST.fixe);
+    var fixZeilen = ST.fixe.map(function (f) {
+      var k = f.kategorie === 'eigene' ? { name: f.eigName || 'Eigene Kategorie' } : fixKategorieById(f.kategorie);
+      return '<tr><td>' + esc(fixName(f)) + '</td><td>' + esc(k.name) + '</td><td>' + euroAusCent(f.cent) + ' ' + esc(rythmusName(f.rythmus)) + '</td><td>' + euroAusCent(fixMonatsCent(f)) + '</td></tr>';
+    }).join('');
+    seiten += '<div class="druck-seite">' +
+      '<h2>Mein Haushaltsbuch · Feste Kosten pro Monat</h2>' +
+      '<p class="druck-unter">Umgerechnet auf den Monat</p>' +
+      '<p class="druck-gesamt">' + euroAusCent(sollFix) + '</p>' +
+      '<p class="druck-vergleich">' + ST.fixe.length + ' feste Zahlungen, geordnet nach Bereichen.</p>' +
+      '<table class="druck-tabelle"><tr><th>Name</th><th>Art</th><th>Zahlung</th><th>Ø pro Monat</th></tr>' + fixZeilen + '</table>' +
+      '<p class="druck-fuss">Gedruckt am ' + fmtDatum(heuteIso()) + ' · ' + VERSION + '</p>' +
+      '</div>';
+  }
+  ziel.innerHTML = seiten;
+}
+
+/* ---------- Alles zeichnen ---------- */
+function renderAlles() {
+  try {
+    if (ST.tab === 'uebersicht') renderUebersicht();
+    else if (ST.tab === 'eintraege') renderListe();
+    else if (ST.tab === 'gruppen') renderGruppen();
+    else if (ST.tab === 'fixe') renderFixe();
+    else if (ST.tab === 'pruefung') renderPruefung();
+    else if (ST.tab === 'tipps') renderTipps();
+    druckAufbauen();
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Automatisches Quittung-Lesen (Foto → Text → Beleg-Block) ---------- */
+var OCR_SKRIPT_QUELLE = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+
+function ocrStatus(text) {
+  try { document.getElementById('ocr-status').textContent = text; } catch (e) {}
+}
+
+function ocrFotoGewaehlt(ev) {
+  try {
+    var datei = ev && ev.target && ev.target.files && ev.target.files[0];
+    if (!datei) { return; }
+    if (typeof FileReader === 'undefined' || typeof Image === 'undefined') {
+      ocrStatus('Fotos gehen in diesem Browser leider nicht. Nutze den Chat-Weg: Schick mir das Foto im Chat.');
+      return;
+    }
+    ocrStatus('Foto wird vorbereitet …');
+    var leser = new FileReader();
+    leser.onload = function () { bildFuerOcr(leser.result); };
+    leser.onerror = function () { ocrStatus('Das Foto konnte nicht gelesen werden.'); };
+    leser.readAsDataURL(datei);
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* Fürs Lesen braucht der Text scharfe Kanten: größer und kräftiger als das Anhäng-Foto. */
+function bildFuerOcr(dataUrl) {
+  try {
+    var img = new Image();
+    img.onload = function () {
+      var maxKante = 1600;
+      var breite = img.width, hoehe = img.height;
+      if (Math.max(breite, hoehe) > maxKante) {
+        var faktor = maxKante / Math.max(breite, hoehe);
+        breite = Math.max(1, Math.round(breite * faktor));
+        hoehe = Math.max(1, Math.round(hoehe * faktor));
+      }
+      var c = document.createElement('canvas');
+      c.width = breite; c.height = hoehe;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, breite, hoehe);
+      ocrTesseractLaden(c.toDataURL('image/jpeg', 0.9));
+    };
+    img.onerror = function () { ocrStatus('Das Bild konnte nicht verarbeitet werden.'); };
+    img.src = dataUrl;
+  } catch (e) { ocrStatus('Das Bild konnte nicht verarbeitet werden.'); }
+}
+
+function ocrTesseractLaden(bildDataUrl) {
+  ocrStatus('Leseprogramm wird geladen … Beim ersten Mal dauert das etwas (etwa 10 bis 20 MB, danach gespeichert).');
+  var weiter = function (ok, fehlerText) {
+    if (!ok) { ocrStatus(fehlerText); return; }
+    try {
+      var fortschritt = function (m) {
+        if (!m) { return; }
+        if (m.status === 'recognizing text') { ocrStatus('Text wird gelesen … ' + Math.round((m.progress || 0) * 100) + ' %'); return; }
+        if (m.status) { ocrStatus('Leseprogramm: ' + m.status + ' …'); }
+      };
+      window.Tesseract.createWorker('deu', 1, { logger: fortschritt }).then(function (worker) {
+        worker.recognize(bildDataUrl).then(function (erg) {
+          try { worker.terminate(); } catch (e) {}
+          ocrVerarbeiten(erg && erg.data && erg.data.text ? erg.data.text : '');
+        }).catch(function (f2) {
+          try { worker.terminate(); } catch (e) {}
+          ocrStatus('Lesen fehlgeschlagen: ' + (f2 && f2.message ? f2.message : f2));
+        });
+      }).catch(function (f3) {
+        ocrStatus('Das Leseprogramm konnte nicht gestartet werden: ' + (f3 && f3.message ? f3.message : f3));
+      });
+    } catch (f) { ocrStatus('Das Leseprogramm konnte nicht gestartet werden.'); }
+  };
+  if (window.Tesseract) { weiter(true); return; }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    weiter(false, 'Kein Internet. Zum ersten Mal brauchst du Internet, damit das Leseprogramm geladen werden kann. Danach geht es auch offline.');
+    return;
+  }
+  var skript = null;
+  try { skript = document.createElement('script'); } catch (e) { skript = null; }
+  if (!skript) { weiter(false, 'In dieser Umgebung kann kein Leseprogramm geladen werden.'); return; }
+  var fertig = false;
+  var fehlerText = 'Das Leseprogramm konnte nicht geladen werden (kein Internet oder hier nicht erlaubt). Nutze die Web-App (siehe Anleitung) oder den Chat-Weg: Schick mir das Foto im Chat.';
+  var warte = setTimeout(function () {
+    if (!fertig) { fertig = true; weiter(false, fehlerText); }
+  }, 30000);
+  skript.onload = function () { if (!fertig) { fertig = true; clearTimeout(warte); weiter(true); } };
+  skript.onerror = function () { if (!fertig) { fertig = true; clearTimeout(warte); weiter(false, fehlerText); } };
+  skript.src = OCR_SKRIPT_QUELLE;
+  try { document.head.appendChild(skript); } catch (e) {
+    if (!fertig) { fertig = true; clearTimeout(warte); weiter(false, fehlerText); }
+  }
+}
+
+function ocrVerarbeiten(rohtext) {
+  try {
+    var erg = belegAusText(rohtext, heuteIso());
+    var feld = document.getElementById('beleg-feld');
+    var ergebnisFeld = document.getElementById('beleg-ergebnis');
+    feld.value = erg.block;
+    if (!erg.positionen.length) {
+      ocrStatus('Lesen beendet, aber nichts Brauchbares erkannt.');
+      ergebnisFeld.textContent = erg.hinweise.join(' ');
+      return;
+    }
+    ocrStatus('Fertig gelesen ✓ Jetzt bitte prüfen und übernehmen.');
+    ergebnisFeld.textContent = 'Erkannt: ' + erg.positionen.length + ' Positionen' +
+      (erg.hinweise.length ? ' · ' + erg.hinweise.join(' · ') : '') +
+      '. Bitte prüfe den Block und drücke dann „Quittung übernehmen“.';
+    try { feld.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+  } catch (f) { zeigeFehler(f); }
+}
+
+/* ---------- Start ---------- */
+function init() {
+  zustandLaden();
+  ST.anker = heuteIso();
+  ST.bearbeitetId = null;
+  document.getElementById('eingabe-datum').value = heuteIso();
+  var sel = document.getElementById('eingabe-gruppe');
+  sel.innerHTML = GRUPPEN.map(function (g) {
+    return '<option value="' + g.id + '">' + g.icon + ' ' + esc(g.name) + '</option>';
+  }).join('');
+  var fixKat = document.getElementById('fix-kategorie');
+  fixKat.innerHTML = FIX_KATEGORIEN.map(function (k) {
+    return '<option value="' + k.id + '">' + k.icon + ' ' + esc(k.name) + '</option>';
+  }).join('');
+  var fixEig = document.getElementById('fix-eigene-gruppe');
+  fixEig.innerHTML = GRUPPEN.map(function (g) {
+    return '<option value="' + g.id + '">' + g.icon + ' ' + esc(g.name) + '</option>';
+  }).join('');
+  zeigeTab(ST.tab || 'uebersicht');
+}
+
+if (typeof document !== 'undefined' && document.getElementById) {
+  init();
+}
+</script>
+<script>
+if ((location.protocol === "https:" || location.protocol === "http:") && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+</script>
+</body>
+</html>

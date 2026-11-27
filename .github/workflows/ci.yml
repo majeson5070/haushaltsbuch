@@ -1,0 +1,22 @@
+name: Pruefungen
+on: [push]
+permissions:
+  contents: write
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prüf-Suite laufen lassen
+        run: node tests/test.js index.html
+      - name: App-Icons erzeugen
+        run: python3 tools/mache_icons.py
+      - name: App-Icons einchecken
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add icon-192.png icon-512.png
+          git diff --cached --quiet || (git commit -m "App-Icons automatisch erzeugen" && git push)
