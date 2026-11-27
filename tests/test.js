@@ -1,4 +1,4 @@
-/* Prüf-Suite für das Haushaltsbuch · VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE
+/* Prüf-Suite für das Haushaltsbuch · VERSION Nr. 8 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE
    Aufruf: node test.js [quelldatei]  (Standard: das Canvas; im Web-Regal: index.html)
    A) Logik-Tests  B) Syntax-Check  C) DOM-Generalprobe  D) Update-Suche */
 'use strict';
@@ -165,14 +165,53 @@ const rohNettoOhneB = 'Netto Marken-Discount\nFlamenco Kaminholz 11dm3\n8,88\nSU
 const o8 = L.belegAusText(rohNettoOhneB, HEUTE);
 pruefen('Netto ohne B-Suffix: Name aus Zeile darueber', o8.positionen.length === 1 && o8.positionen[0].name.indexOf('Kaminholz') >= 0 && o8.positionen[0].cent === 888);
 
+/* ---------- Quittungs-Typen: Tankstelle, Möbelhaus, Spielzeug, Bäckerei, Kiosk ---------- */
+const rohAral = 'ARAL TANKSTELLE\n40699 Erkrath\n26.11.2026 14:32\nSUPER E10\n1,829 EUR/L\n44,75 L\n80,51 EUR\nZwischensumme 80,51\nKartenzahlung EUR 80,51';
+const oAral = L.belegAusText(rohAral, HEUTE);
+pruefen('Tankstelle: Kraftstoff mit echten Namen SUPER E10', oAral.positionen.length === 1 && oAral.positionen[0].name === 'SUPER E10' && oAral.positionen[0].cent === 8051);
+pruefen('Tankstelle: Literpreis-Zeile ist kein Artikel', oAral.positionen.every(p => p.name.indexOf('829') < 0));
+pruefen('Tankstelle: Kraftstoff → Mobilität', oAral.positionen[0].gruppe === 'mobilitaet');
+pruefen('Tankstelle: Gesamt 80,51', oAral.gesamtCent === 8051);
+
+const rohIkea = 'IKEA\n26.11.2026 17:45\nArt.-Nr. 403.572.39\nKLEINOD Regalboden\n403.572.39\n39,99\nBILLY Regal weiss\n59,99\nZwischensumme 99,98\nSUMME 99,98';
+const oIkea = L.belegAusText(rohIkea, HEUTE);
+pruefen('Möbelhaus: Artikel-Nummern sind kein Preis (2 Positionen)', oIkea.positionen.length === 2);
+pruefen('Möbelhaus: Name aus Zeile darüber bei eigenem Preis', oIkea.positionen[0].name === 'KLEINOD Regalboden' && oIkea.positionen[0].cent === 3999);
+pruefen('Möbelhaus: Regal → Wohnen', oIkea.positionen[0].gruppe === 'wohnen');
+pruefen('Möbelhaus: Gesamt 99,98', oIkea.gesamtCent === 9998);
+
+const rohToys = 'Toys R Us\n26.11.2026 15:30\nLEGO 60322 89,99\nPLAYMOBIL 71148 34,99\nSUMME 124,98';
+const oToys = L.belegAusText(rohToys, HEUTE);
+pruefen('Spielzeug: 2 Positionen erkannt', oToys.positionen.length === 2 && oToys.positionen[0].cent === 8999);
+pruefen('Spielzeug: LEGO und Playmobil → Freizeit', oToys.positionen[0].gruppe === 'freizeit' && oToys.positionen[1].gruppe === 'freizeit');
+
+const rohBaecker = 'Bäckerei Krämer\n26.11.2026 08:15\n3 SEMMELN 1,35\nKAFFEE TO GO 2,20\nSUMME 3,55\nBar 5,00\nRückgeld 1,45';
+const oBaecker = L.belegAusText(rohBaecker, HEUTE);
+pruefen('Bäckerei: Semmeln und Kaffee to go erkannt', oBaecker.positionen.length === 2 && oBaecker.positionen[0].cent === 135);
+pruefen('Bäckerei: Rückgeld ist kein Artikel', oBaecker.positionen.every(p => p.name.indexOf('Rückgeld') < 0));
+pruefen('Bäckerei: Kaffee to go → Essen unterwegs', oBaecker.positionen[1].gruppe === 'essenunterwegs');
+
+const rohKiosk = 'KIOSK AM PARK\n26.11.26\nZEITUNG 3,50\nLOTTOSCHEIN 2,00\nZIGARETTEN 7,80\nKAUGUMMI 1,50\nSUMME 14,80';
+const oKiosk = L.belegAusText(rohKiosk, HEUTE);
+pruefen('Kiosk: 4 Positionen erkannt', oKiosk.positionen.length === 4);
+pruefen('Kiosk: Zeitung → Freizeit, Zigaretten → Sonstiges', oKiosk.positionen[0].gruppe === 'freizeit' && oKiosk.positionen[2].gruppe === 'sonstiges');
+pruefen('Kiosk: Gesamtsumme 14,80', oKiosk.gesamtCent === 1480);
+
+const rohStk = 'BACKWERK\nBRETZEL 2 STK 1,20\nSUMME 1,20';
+const oStk = L.belegAusText(rohStk, HEUTE);
+pruefen('Bäckerei: „2 STK“ wird vom Namen abgeschnitten', oStk.positionen.length === 1 && oStk.positionen[0].name === 'BRETZEL' && oStk.positionen[0].cent === 120);
+
+pruefen('preisAmZeilenende: „80,51 EUR“ → 8051', L.preisAmZeilenende('80,51 EUR') === 8051);
+
+
 pruefen('warenGruppeAusName: aspirin → gesundheit', L.warenGruppeAusName('ASPIRIN 500', 'lebensmittel') === 'gesundheit');
 pruefen('warenGruppeAusName: unbekannt → Standard', L.warenGruppeAusName('QUARK', 'lebensmittel') === 'lebensmittel');
 pruefen('preisAmZeilenende: „BROT 3,49 B“ → 349', L.preisAmZeilenende('BROT 3,49 B') === 349);
 pruefen('preisAmZeilenende: „1.234,56 A“ → 123456', L.preisAmZeilenende('X 1.234,56 A') === 123456);
 pruefen('preisAmZeilenende: kein Preis → null', L.preisAmZeilenende('BROT') === null);
 
-pruefen('VERSION-Siegel im Skript: Nr. 7 · FOTO-OBEN · UPDATE-SUCHE', L.VERSION.indexOf('Nr. 7') >= 0 && L.VERSION.indexOf('FOTO-OBEN') >= 0 && L.VERSION.indexOf('UPDATE-SUCHE') >= 0);
-pruefen('Fuß-Zeile im HTML synchron (Nr. 7 · FOTO-OBEN · UPDATE-SUCHE)', md.indexOf('VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>') >= 0);
+pruefen('VERSION-Siegel im Skript: Nr. 8 · FOTO-OBEN · UPDATE-SUCHE', L.VERSION.indexOf('Nr. 8') >= 0 && L.VERSION.indexOf('FOTO-OBEN') >= 0 && L.VERSION.indexOf('UPDATE-SUCHE') >= 0);
+pruefen('Fuß-Zeile im HTML synchron (Nr. 8 · FOTO-OBEN · UPDATE-SUCHE)', md.indexOf('VERSION Nr. 8 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>') >= 0);
 pruefen('Update-Knopf im Fuß vorhanden', md.indexOf('onclick="updateSuchen()"') >= 0);
 pruefen('Update-Hinweis-Feld vorhanden', md.indexOf('id="update-hinweis"') >= 0);
 pruefen('OCR-Karte im HTML vorhanden', md.indexOf('id="ocr-eingabe"') >= 0 && md.indexOf('ocrFotoGewaehlt') >= 0);

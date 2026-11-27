@@ -351,7 +351,7 @@ textarea{min-height:90px;font-size:13px}
   <button class="knopf knopf-leise" onclick="posSchliessen()">Schließen</button>
 </div>
 <div id="toast"></div>
-<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
+<p id="fuss">Alle Daten bleiben auf deinem Gerät. Sie werden nicht ins Internet geschickt. · VERSION Nr. 8 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE</p>
 <div class="fuss-update"><button type="button" class="mini-knopf" onclick="updateSuchen()">🔍 Nach Updates suchen</button><span class="hinweis-leise" id="update-hinweis"></span></div>
 
 <script>
@@ -370,7 +370,7 @@ if (typeof window !== 'undefined') {
 
 // ================= LOGIK-BEGINN (reine Funktionen, ohne Fenster und Dokument) =================
 
-var VERSION = 'VERSION Nr. 7 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
+var VERSION = 'VERSION Nr. 8 · 27.11.2026 · FOTO-OBEN · UPDATE-SUCHE';
 var SPEICHER_EINTRAEGE = 'hhb.eintraege';
 var SPEICHER_EINKOMMEN = 'hhb.einkommen';
 var SPEICHER_ART = 'hhb.zeitraum-art';
@@ -425,7 +425,12 @@ var HAENDLER_HINT = [
   ['miete', 'wohnen'], ['stadtwerke', 'wohnen'], ['strom', 'wohnen'], ['gas ', 'wohnen'],
   ['vattenfall', 'wohnen'], ['eon', 'wohnen'], ['enbw', 'wohnen'], ['wasser', 'wohnen'],
   ['ikea', 'wohnen'], ['möbel', 'wohnen'], ['moebel', 'wohnen'], ['obi', 'wohnen'],
-  ['bauhaus', 'wohnen'], ['toom', 'wohnen'], ['hornbach', 'wohnen'], ['baumarkt', 'wohnen']
+  ['bauhaus', 'wohnen'], ['toom', 'wohnen'], ['hornbach', 'wohnen'], ['baumarkt', 'wohnen'],
+  ['höffner', 'wohnen'], ['hoeffner', 'wohnen'], ['xxxlutz', 'wohnen'], ['poco', 'wohnen'], ['möbelix', 'wohnen'],
+  ['toys', 'freizeit'], ['lego', 'freizeit'], ['playmobil', 'freizeit'], ['mytoys', 'freizeit'],
+  ['kiosk', 'lebensmittel'], ['trinkhalle', 'lebensmittel'], ['backhaus', 'lebensmittel'],
+  ['backstube', 'lebensmittel'], ['konditorei', 'lebensmittel'],
+  ['rasthof', 'mobilitaet'], ['autohof', 'mobilitaet'], ['circle k', 'mobilitaet'], ['agip', 'mobilitaet'], ['eni ', 'mobilitaet']
 ];
 
 /* Spartipps je Warengruppe, in einfacher Sprache */
@@ -1025,7 +1030,18 @@ var WAREN_HINT = [
   ['benzin', 'mobilitaet'], ['diesel', 'mobilitaet'], ['super e5', 'mobilitaet'], ['super e10', 'mobilitaet'],
   ['ticket', 'freizeit'], ['kinokarte', 'freizeit'],
   ['holz', 'drogerie'], ['brikett', 'drogerie'], ['kamin', 'drogerie'],
-  ['anzünder', 'drogerie'], ['müllbeutel', 'drogerie'], ['müllsack', 'drogerie'], ['kerze', 'drogerie']
+  ['anzünder', 'drogerie'], ['müllbeutel', 'drogerie'], ['müllsack', 'drogerie'], ['kerze', 'drogerie'],
+  ['lego', 'freizeit'], ['playmobil', 'freizeit'], ['puppe', 'freizeit'], ['puzzl', 'freizeit'],
+  ['brettspiel', 'freizeit'], ['spielzeug', 'freizeit'], ['zeitung', 'freizeit'], ['zeitschrift', 'freizeit'],
+  ['comic', 'freizeit'],
+  ['lotto', 'sonstiges'], ['toto', 'sonstiges'], ['zigaretten', 'sonstiges'], ['tabak', 'sonstiges'],
+  ['semmel', 'lebensmittel'], ['brötchen', 'lebensmittel'], ['brezel', 'lebensmittel'],
+  ['baguette', 'lebensmittel'], ['croissant', 'lebensmittel'], ['gipfeli', 'lebensmittel'],
+  ['to go', 'essenunterwegs'],
+  ['regal', 'wohnen'], ['schrank', 'wohnen'], ['tisch', 'wohnen'], ['stuhl', 'wohnen'],
+  ['sofa', 'wohnen'], ['bett', 'wohnen'], ['lampe', 'wohnen'], ['vorhang', 'wohnen'], ['teppich', 'wohnen'],
+  ['super 95', 'mobilitaet'], ['super plus', 'mobilitaet'], ['kraftstoff', 'mobilitaet'],
+  ['adblue', 'mobilitaet'], ['waschanlage', 'mobilitaet'], ['autowäsch', 'mobilitaet']
 ];
 
 function warenGruppeAusName(name, standardId) {
@@ -1038,7 +1054,7 @@ function warenGruppeAusName(name, standardId) {
 
 /* Findet am Ende einer Zeile einen Preis (auch mit Tausender-Punkt oder A/B-Kürzel dahinter). */
 function preisAmZeilenende(zeile) {
-  var treffer = String(zeile || '').match(/(\d+(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2})\s*[AB]?\s*$/);
+  var treffer = String(zeile || '').match(/(\d+(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2})\s*(?:[AB]|EUR|€)?\s*$/i);
   if (!treffer) return null;
   var cent = centAusEuro(treffer[1]);
   return cent === null ? null : cent;
@@ -1051,7 +1067,7 @@ function belegAusText(rohtext, heuteIsoStr) {
   if (!zeilen.length) { return { block: '', positionen: [], hinweise: ['Es wurde kein Text erkannt.'] }; }
 
   var SUMMEN_WORTE = /summe|gesamt|total|endbetrag|endsumme|zu zahlen|zahlbetrag/i;
-  var ZAHL_WORTE = /bar\b|ec[\s-]*karte|maestro|visa|mastercard|gezahl|gegeb|rückgeld|ruckgeld|wechselgeld|unterschrift|automat|terminal|kartenzahlung|punkte|bonus|rabatt|pfandgesamt|nv\s*steuer|mws|steuer/i;
+  var ZAHL_WORTE = /bar\b|ec[\s-]*karte|maestro|visa|mastercard|gezahl|gegeb|rückgeld|ruckgeld|rueckgeld|wechselgeld|unterschrift|automat|terminal|kartenzahlung|punkte|bonus|rabatt|pfandgesamt|nv\s*steuer|mws|steuer|menge|literpreis|einzelpreis|\/\s*l\b|pro\s*l\b|artikel[\s-]*n(?:r|ummer)|art\.?[\s-]*nr|\bean\b|\bgtin\b|payback|deutschlandcard|kundekarte|kundenkarte|stammkarte|coupon|gutschein|sepa|lastschrift/i;
 
   /* 1) Kassen-Summe suchen: letzte Zeile mit Summen-Wort und Preis. */
   var gesamtCent = null;
@@ -1129,10 +1145,14 @@ function belegAusText(rohtext, heuteIsoStr) {
     if (/^\d{1,2}[.\/\-]\d{1,2}(?:[.\/\-]\d{2,4})?\s*$/.test(zeile)) continue;
     /* Zeilen, die mit einem Datum enden („Dortmund, den 26.11.26“), sind kein Preis. */
     if (/\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4}\s*$/.test(zeile)) continue;
+    /* Artikel-Nummern wie „403.572.39“ (Möbelhaus) sind kein Preis. */
+    if (/^\d{2,}(?:[.\-]\d{2,4}){2,}\s*$/.test(zeile)) continue;
+    /* Liter-Preise („1,829 EUR/L“) sind kein Artikel-Preis. */
+    if (/(?:\/|pro)\s*l\b|literpreis|einzelpreis/i.test(zeile)) continue;
     if (SUMMEN_WORTE.test(zeile)) continue;
     if (ZAHL_WORTE.test(zeile)) continue;
     if (gesamtCent !== null && cent === gesamtCent && positionen.length > 0 && /endbetrag|zu zahlen|zahlbetrag/i.test(zeile)) continue;
-    var name = zeile.replace(/(\d+(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2})\s*[AB]?\s*$/, '').trim();
+    var name = zeile.replace(/(\d+(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2})\s*(?:[AB]|EUR|€)?\s*$/i, '').trim();
     /* Ein klares „x“ bedeutet: Menge mal Einzelpreis, zum Beispiel „2 x 1,50“ = 3,00 €.
        Eine Zahl ohne „x“ (zum Beispiel „2 TEE 1,50“) lasse ich unverändert, weil Kassen
        dort meist den Zeilen-Preis drucken. Der Summen-Check fragt bei Abweichungen nach. */
@@ -1140,6 +1160,11 @@ function belegAusText(rohtext, heuteIsoStr) {
     var mengeTreffer = name.match(/^(\d{1,2})\s*[x*×]\s*/i);
     if (mengeTreffer) { menge = Number(mengeTreffer[1]); name = name.slice(mengeTreffer[0].length).trim(); }
     name = nameSauber(name);
+    /* „BETRAG“-Zeilen (Tankstelle) tragen nur den Preis, der Name steht weiter oben. */
+    if (/^betrag\b/i.test(name)) name = '';
+    /* Nur Mengen-Wörter wie „2 STK“ oder „ST“ sind kein Name. */
+    if (/^(\d{1,3}[\s.]*)?(?:stk|stueck|stück|st\.?)$/i.test(name)) name = '';
+    name = name.replace(/\s+(?:\d{1,3}[\s.]*)?(?:stk|stueck|stück|st\.?)$/i, '').trim();
     if (name === '' || !/[A-Za-zÄÖÜäöüß]/.test(name)) {
       var nameGefunden = false;
       if (menge > 1) {
@@ -1157,9 +1182,14 @@ function belegAusText(rohtext, heuteIsoStr) {
             break;
           }
         }
-      } else if (namensKandidatOK(z - 1)) {
-        /* Preis-Zeile ohne Name: Name steht oft in der Zeile darueber. */
-        name = nameSauber(zeilen[z - 1]); verbraucht[z - 1] = true; nameGefunden = true;
+      } else {
+        /* Preis-Zeile ohne Name: Der Name steht oft in einer der Zeilen darueber,
+           bei Tankstellen und Moebelhaeusern auch 2 bis 3 Zeilen weiter oben. */
+        for (var r = z - 1; r >= z - 3 && r >= 0; r--) {
+          if (namensKandidatOK(r) && nameSauber(zeilen[r]).toLowerCase() !== laden.toLowerCase()) {
+            name = nameSauber(zeilen[r]); verbraucht[r] = true; nameGefunden = true; break;
+          }
+        }
       }
       if (!nameGefunden) {
         if (menge > 1) { name = 'Artikel'; } else { continue; }
